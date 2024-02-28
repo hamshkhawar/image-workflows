@@ -1,4 +1,4 @@
-"""Ome Converter."""
+"""CWL Workflow."""
 import logging
 from typing import Any
 from typing import Optional
