@@ -19,7 +19,7 @@ def get_params(path: Path, name: str):
     return params
 
 
-params = {
+feat_params = {
     "BBBC039": {
         "name": "BBBC039",
         "file_pattern": ".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif",
@@ -34,12 +34,12 @@ params = {
         "file_extension": "pandas"
     }
 }
-model = DataModel(data=params)
+model = DataModel(data=feat_params)
 model_dict = model.dict()
 
 json_dir = Path(Path(__file__).parents[1]).joinpath("bbbc_json")
 json_dir.mkdir(parents=True, exist_ok=True)
-JSON_FILENAME = json_dir.joinpath("bbbc_config.json")
+FEAT_JSON_FILENAME = json_dir.joinpath("bbbc_config.json")
 
-with Path.open(JSON_FILENAME, "w") as json_file:
+with Path.open(FEAT_JSON_FILENAME, "w") as json_file:
     json.dump(model_dict, json_file, indent=2)

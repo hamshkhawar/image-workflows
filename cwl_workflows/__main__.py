@@ -3,7 +3,7 @@ import logging
 from typing import Any
 from typing import Optional
 import typer
-from utils import JSON_FILENAME
+from utils import FEAT_JSON_FILENAME
 from utils import get_params
 from cwl_features_extraction import CWLFeatureWorkflow
 
@@ -40,12 +40,13 @@ def main(
     logger.info(f"name = {name}")
     logger.info(f"workflow = {workflow}")
 
-    params = get_params(JSON_FILENAME, name)
+    
 
-    if workflow == "CWLFeatureWorkflow":
-         logger.info(f"Executing {workflow}!!!")
-         model = CWLFeatureWorkflow(**params)
-         model.workflow()
+    if workflow == "feature":
+        params = get_params(FEAT_JSON_FILENAME, name)
+        logger.info(f"Executing {workflow}!!!")
+        model = CWLFeatureWorkflow(**params)
+        model.workflow()
 
     logger.info("Completed CWL workflow!!!")
 

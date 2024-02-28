@@ -36,7 +36,7 @@ Below are the specifics of the plugins employed in the workflow
 
 The parameters for each imaging dataset are pre-defined and stored in JSON format. A Pydantic model in a utils Python file can be utilized to store parameters for any new dataset
 
-`python cwl_workflows/__main__.py --name="BBBC039" --workflow=CWLFeatureWorkflow`
+`python cwl_workflows/__main__.py --name="BBBC039" --workflow=feature`
 
 A directory named `workflow` is generated, encompassing CLTs for each plugin, YAML files, and all outputs are stored within the `outdir` directory.
 ```
