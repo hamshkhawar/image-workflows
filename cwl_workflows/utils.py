@@ -19,7 +19,7 @@ def get_params(path: Path, name: str):
     return params
 
 
-params = {
+seg_params = {
     "BBBC039": {
         "name": "BBBC039",
         "file_pattern": ".*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif",
@@ -29,17 +29,15 @@ params = {
         "map_directory": "raw",
         "ff_pattern": "images_x\\(00-15\\)_y\\(01-24\\)_p0\\(1-9\\)_c{c:d}_flatfield.ome.tif",
         "df_pattern": "images_x\\(00-15\\)_y\\(01-24\\)_p0\\(1-9\\)_c{c:d}_darkfield.ome.tif",
-        "group_by": "c",
-        "features": "ALL_INTENSITY,ALL_MORPHOLOGY",
-        "file_extension": "pandas"
+        "group_by": "c"
     }
 }
-model = DataModel(data=params)
+model = DataModel(data=seg_params)
 model_dict = model.dict()
 
 json_dir = Path(Path(__file__).parents[1]).joinpath("bbbc_json")
 json_dir.mkdir(parents=True, exist_ok=True)
-JSON_FILENAME = json_dir.joinpath("bbbc_config.json")
+SEG_JSON_FILENAME = json_dir.joinpath("bbbc_segmentation.json")
 
-with Path.open(JSON_FILENAME, "w") as json_file:
+with Path.open(SEG_JSON_FILENAME, "w") as json_file:
     json.dump(model_dict, json_file, indent=2)

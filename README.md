@@ -1,4 +1,4 @@
-# Common Workflow Language (CWL) Feature Extraction worflow
+# Common Workflow Language (CWL) Nuclear Segmentation worflow
 
 CWL feature extraction workflow for imaging dataset
 
@@ -20,7 +20,7 @@ create a [Conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 - `pip install -e ".[all]"`
 
 ## Details 
-This workflow integrates eight distinct plugins, starting from data retrieval from [Broad Bioimage Benchmark Collection](https://bbbc.broadinstitute.org/), renaming files, correcting uneven illumination, segmenting nuclear objects, and culminating in the extraction of features from identified objects
+This workflow integrates seven distinct plugins, starting from data retrieval from [Broad Bioimage Benchmark Collection](https://bbbc.broadinstitute.org/), renaming files, correcting uneven illumination, segmenting nuclear objects.
 
 Below are the specifics of the plugins employed in the workflow
 1. [bbbc-download-plugin](https://github.com/saketprem/polus-plugins/tree/bbbc_download/utils/bbbc-download-plugin)
@@ -30,13 +30,12 @@ Below are the specifics of the plugins employed in the workflow
 5. [apply-flatfield-tool](https://github.com/PolusAI/image-tools/tree/master/transforms/images/apply-flatfield-tool)
 6. [kaggle-nuclei-segmentation](https://github.com/hamshkhawar/image-tools/tree/kaggle-nuclei_seg/segmentation/kaggle-nuclei-segmentation)
 7. [polus-ftl-label-plugin](https://github.com/hamshkhawar/image-tools/tree/kaggle-nuclei_seg/transforms/images/polus-ftl-label-plugin)
-8. [nyxus-plugin](https://github.com/PolusAI/image-tools/tree/kaggle-nuclei_seg/features/nyxus-plugin)
 
-## Execute CWL feature extraction workflow
+## Execute CWL Segmentation workflow
 
 The parameters for each imaging dataset are pre-defined and stored in JSON format. A Pydantic model in a utils Python file can be utilized to store parameters for any new dataset
 
-`python cwl_workflows/__main__.py --name="BBBC039" --workflow=CWLFeatureWorkflow`
+`python cwl_workflows/__main__.py --name="BBBC039" --workflow=segmentation`
 
 A directory named `workflow` is generated, encompassing CLTs for each plugin, YAML files, and all outputs are stored within the `outdir` directory.
 ```
@@ -77,8 +76,5 @@ workflows
         ├── step 7 FtlLabel
         │   └── outDir
         │       └── ftl_plugin.outDir
-        └── step 8 NyxusPlugin
-            └── outDir
-                └── nyxus_plugin.outDir
 
 ```

@@ -9,9 +9,7 @@
       "map_directory": "raw",
       "ff_pattern": "images_x\\(00-15\\)_y\\(01-24\\)_p0\\(1-9\\)_c{c:d}_flatfield.ome.tif",
       "df_pattern": "images_x\\(00-15\\)_y\\(01-24\\)_p0\\(1-9\\)_c{c:d}_darkfield.ome.tif",
-      "group_by": "c",
-      "features": "ALL_INTENSITY,ALL_MORPHOLOGY",
-      "file_extension": "pandas"
+      "group_by": "c"
     }
   }
 }

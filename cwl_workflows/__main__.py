@@ -1,11 +1,9 @@
 """CWL Workflow."""
 import logging
-from typing import Any
-from typing import Optional
 import typer
-from utils import JSON_FILENAME
+from utils import SEG_JSON_FILENAME
 from utils import get_params
-from cwl_features_extraction import CWLFeatureWorkflow
+from cwl_nuclear_segmentation import CWLSegmentationWorkflow
 
 
 app = typer.Typer()
@@ -40,11 +38,10 @@ def main(
     logger.info(f"name = {name}")
     logger.info(f"workflow = {workflow}")
 
-    params = get_params(JSON_FILENAME, name)
-
-    if workflow == "CWLFeatureWorkflow":
+    if workflow == "segmentation":
+         params = get_params(SEG_JSON_FILENAME, name)
          logger.info(f"Executing {workflow}!!!")
-         model = CWLFeatureWorkflow(**params)
+         model = CWLSegmentationWorkflow(**params)
          model.workflow()
 
     logger.info("Completed CWL workflow!!!")

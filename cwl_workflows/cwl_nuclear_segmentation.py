@@ -5,7 +5,6 @@ import yaml
 import logging
 import re
 import shutil
-import typing
 from utils import GITHUB_TAG
 
 # Initialize the logger
@@ -13,9 +12,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class CWLFeatureWorkflow:
+class CWLSegmentationWorkflow:
     """
-    A CWL feature extraction pipeline.
+    A CWL Nuclear Segmentation pipeline.
 
     Attributes:
         name : Name of imaging dataset of Broad Bioimage Benchmark Collection (https://bbbc.broadinstitute.org/image_sets).
@@ -27,8 +26,6 @@ class CWLFeatureWorkflow:
         ff_pattern: The filename pattern employed to select flatfield components from the ffDir.
         df_pattern:The filename pattern employed to select darkfield components from the ffDir
         group_by: Grouping variables for filePattern
-        features:Features from Nyxus (https://github.com/PolusAI/nyxus/) that need extraction
-        file_extension: Output file format
     """
     def __init__(
         self,
@@ -40,9 +37,7 @@ class CWLFeatureWorkflow:
         map_directory: str,
         ff_pattern: str,
         df_pattern: str,
-        group_by: str,
-        features: typing.Optional[str]="ALL",
-        file_extension: typing.Optional[str]="arrowipc"
+        group_by: str
     ):
         self.name = name
         self.file_pattern = file_pattern
@@ -56,8 +51,6 @@ class CWLFeatureWorkflow:
         self.cwl_path, self.workflow_path = self._create_directories()
         self.image_pattern = image_pattern
         self.seg_pattern = seg_pattern
-        self.features = features
-        self.file_extension = file_extension
 
     def _create_directories(self) -> None:
         """Create directories for CWL outputs"""
@@ -144,7 +137,6 @@ class CWLFeatureWorkflow:
             "apply_flatfield": f"{GITHUB_TAG}/hamshkhawar/image-tools/cast_images/transforms/images/apply-flatfield-tool/plugin.json",
             "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/kaggle-nuclei_seg/segmentation/kaggle-nuclei-segmentation/plugin.json",
             "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json",
-            "nyxus_plugin": f"{GITHUB_TAG}/hamshkhawar/image-tools/nyxus_manifest/features/nyxus-plugin/plugin.json",
         }
         return urls[x]
 
@@ -224,18 +216,6 @@ class CWLFeatureWorkflow:
         ftl_plugin.binarizationThreshold = 0.5
         ftl_plugin.outDir = Path("ftl_plugin.outDir")
 
-        # ## Nyxus Plugin
-        nyxus_plugin = self.create_step(self.manifest_urls("nyxus_plugin"))
-        nyxus_plugin.inpDir = apply_flatfield.outDir
-        nyxus_plugin.segDir = ftl_plugin.outDir
-        nyxus_plugin.intPattern = self.image_pattern
-        nyxus_plugin.segPattern = self.seg_pattern
-        nyxus_plugin.features = self.features
-        nyxus_plugin.fileExtension = self.file_extension
-        nyxus_plugin.neighborDist = 5
-        nyxus_plugin.pixelPerMicron = 1.0
-        nyxus_plugin.outDir =  Path("nyxus_plugin.outDir")
-
         logger.info("Initiating CWL Feature Extraction Workflow!!!")
         steps = [
             bbbc,
@@ -244,8 +224,7 @@ class CWLFeatureWorkflow:
             estimate_flatfield,
             apply_flatfield,
             kaggle_nuclei_segmentation,
-            ftl_plugin,
-            nyxus_plugin
+            ftl_plugin
         ]
         workflow = api.Workflow(steps, "experiment", self.workflow_path)
         # # Saving CLT for plugins
