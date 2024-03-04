@@ -23,7 +23,7 @@ class CWLFeatureWorkflow:
         out_file_pattern : Preferred format for filenames
         image_pattern : Pattern for parsing intensity image filenames after renaming when using map_directory
         seg_pattern : Pattern use to parse segmentation image filenames
-        map_directory : Extract folder name
+        map_directory : Mapping of folder name
         ff_pattern: The filename pattern employed to select flatfield components from the ffDir.
         df_pattern:The filename pattern employed to select darkfield components from the ffDir
         group_by: Grouping variables for filePattern
