@@ -37,17 +37,16 @@ class CWLFeatureWorkflow:
         out_file_pattern: str,
         image_pattern: str,
         seg_pattern: str,
-        map_directory: str,
         ff_pattern: str,
         df_pattern: str,
         group_by: str,
+        map_directory: typing.Optional[bool] = False,
         features: typing.Optional[str]="ALL",
         file_extension: typing.Optional[str]="arrowipc"
     ):
         self.name = name
         self.file_pattern = file_pattern
         self.out_file_pattern = out_file_pattern
-        self.map_directory = map_directory
         self.ff_pattern = ff_pattern
         self.df_pattern = df_pattern
         self.group_by = group_by
@@ -58,6 +57,7 @@ class CWLFeatureWorkflow:
         self.seg_pattern = seg_pattern
         self.features = features
         self.file_extension = file_extension
+        self.map_directory = map_directory
 
     def _create_directories(self) -> None:
         """Create directories for CWL outputs"""
@@ -138,11 +138,11 @@ class CWLFeatureWorkflow:
 
         urls = {
             "bbbc_download": f"{GITHUB_TAG}/saketprem/polus-plugins/bbbc_download/utils/bbbc-download-plugin/plugin.json",
-            "file_renaming": f"{GITHUB_TAG}/PolusAI/polus-plugins/f20a2f75264d59af78cfb40b4c3cec118309f7ec/formats/file-renaming-plugin/plugin.json",
+            "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/filepattern_filerenaming/formats/file-renaming-tool/plugin.json",
             "ome_converter": f"{GITHUB_TAG}/hamshkhawar/image-tools/basecontainer_omecontainer/formats/ome-converter-plugin/plugin.json",
             "estimate_flatfield": f"{GITHUB_TAG}/nishaq503/image-tools/fix/basic/regression/basic-flatfield-estimation-tool/plugin.json",
             "apply_flatfield": f"{GITHUB_TAG}/hamshkhawar/image-tools/cast_images/transforms/images/apply-flatfield-tool/plugin.json",
-            "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/kaggle-nuclei_seg/segmentation/kaggle-nuclei-segmentation/plugin.json",
+            "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/kaggle-nucleiseg/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",
             "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json",
             "nyxus_plugin": f"{GITHUB_TAG}/hamshkhawar/image-tools/nyxus_manifest/features/nyxus-plugin/plugin.json",
         }
