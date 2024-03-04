@@ -8,13 +8,13 @@ create a [Conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 
 #### 1. Install polus-plugins.
 
-- clone a image-tools reporsitory
+- clone a image-tools repository
 `git clone https://github.com/camilovelezr/image-tools.git`
 - cd `image-tools`
 - `pip install .`
 
 #### 2. Install workflow-inference-compiler.
-- clone a workflow-inference-compiler reporsitory
+- clone a workflow-inference-compiler repository
 `git clone https://github.com/camilovelezr/workflow-inference-compiler.git`
 - cd `workflow-inference-compiler`
 - `pip install -e ".[all]"`
