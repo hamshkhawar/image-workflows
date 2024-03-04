@@ -1,8 +1,8 @@
 """CWL Workflow."""
 import logging
 import typer
-from utils import SEG_JSON_FILENAME
-from utils import get_params
+from utils import FEAT_JSON_FILENAME
+from utils import LoadData
 from cwl_nuclear_segmentation import CWLSegmentationWorkflow
 
 
@@ -39,10 +39,11 @@ def main(
     logger.info(f"workflow = {workflow}")
 
     if workflow == "segmentation":
-         params = get_params(SEG_JSON_FILENAME, name)
-         logger.info(f"Executing {workflow}!!!")
-         model = CWLSegmentationWorkflow(**params)
-         model.workflow()
+        model = LoadData(path=FEAT_JSON_FILENAME, name= name)
+        params = model.parse_json()
+        logger.info(f"Executing {workflow}!!!")
+        model = CWLSegmentationWorkflow(**params)
+        model.workflow()
 
     logger.info("Completed CWL workflow!!!")
 
