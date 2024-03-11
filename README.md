@@ -9,15 +9,20 @@ create a [Conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 #### 1. Install polus-plugins.
 
 - clone a image-tools repository
-`git clone https://github.com/camilovelezr/image-tools.git`
+`git clone https://github.com/camilovelezr/image-tools.git ../`
 - cd `image-tools`
 - `pip install .`
 
 #### 2. Install workflow-inference-compiler.
 - clone a workflow-inference-compiler repository
-`git clone https://github.com/camilovelezr/workflow-inference-compiler.git`
+`git clone https://github.com/camilovelezr/workflow-inference-compiler.git ../`
 - cd `workflow-inference-compiler`
 - `pip install -e ".[all]"`
+
+#### Note:
+Ensure that the [docker-desktop](https://www.docker.com/products/docker-desktop/) is running in the background. To verify that it's operational, you can use the following command:
+`docker run -d -p 80:80 docker/getting-started` 
+This command will launch the `docker/getting-started container` in detached mode (-d flag), exposing port 80 on your local machine (-p 80:80). It's a simple way to test if Docker Desktop is functioning correctly.
 
 ## Details 
 This workflow integrates eight distinct plugins, starting from data retrieval from [Broad Bioimage Benchmark Collection](https://bbbc.broadinstitute.org/), renaming files, correcting uneven illumination, segmenting nuclear objects, and culminating in the extraction of features from identified objects
