@@ -10,6 +10,8 @@ create a [Conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 
 - clone a image-tools repository
 `git clone https://github.com/camilovelezr/image-tools.git ../`
+- create a new branch
+`git checkout -b hd2  remotes/origin/hd2`
 - cd `image-tools`
 - `pip install .`
 

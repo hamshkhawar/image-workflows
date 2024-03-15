@@ -161,7 +161,7 @@ class CWLSegmentationWorkflow:
 
     def workflow(self) -> None:
         """
-        A CWL feature extraction pipeline.
+        A CWL nuclear segmentation pipeline.
         """
         # BBBCDownload
         bbbc = self.create_step(self.manifest_urls("bbbc_download"))
@@ -239,6 +239,6 @@ class CWLSegmentationWorkflow:
         # # clean autognerated directories
         self._clean()
         self._move_outputs()
-        logger.info("Completed CWL Feature Extraction Workflow.")
+        logger.info("Completed CWL nuclear segmentation workflow.")
         return
     
