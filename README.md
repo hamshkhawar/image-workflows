@@ -10,15 +10,17 @@ create a [Conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 
 - clone a image-tools repository
 `git clone https://github.com/camilovelezr/image-tools.git ../`
+- cd `image-tools`
 - create a new branch
 `git checkout -b hd2  remotes/origin/hd2`
-- cd `image-tools`
 - `pip install .`
 
 #### 2. Install workflow-inference-compiler.
 - clone a workflow-inference-compiler repository
 `git clone https://github.com/camilovelezr/workflow-inference-compiler.git ../`
 - cd `workflow-inference-compiler`
+- create a new branch
+`git checkout -b hd2  remotes/origin/hd2`
 - `pip install -e ".[all]"`
 
 #### Note:
