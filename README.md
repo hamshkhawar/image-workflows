@@ -50,7 +50,7 @@ During the execution of the segmentation workflow, `1 to 7` plugins will be util
 If a user wishes to execute a workflow for a new dataset, they can utilize a sample YAML file to input parameter values. This YAML file can be saved in the desired subdirectory of the `configuration` folder with the name `dataset.yml`
 
 
-`python cwl_workflows/__main__.py --name="BBBC039" --workflow=analysis`
+`python src/__main__.py --name="BBBC039" --workflow=analysis`
 
 A directory named `workflow` is generated, encompassing CLTs for each plugin, YAML files, and all outputs are stored within the `outdir` directory.
 ```

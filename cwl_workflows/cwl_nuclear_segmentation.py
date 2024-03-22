@@ -6,7 +6,9 @@ import logging
 import typing
 import re
 import shutil
-from utils import GITHUB_TAG
+import sys
+sys.path.append('../')
+from cwl_workflows.utils import GITHUB_TAG
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
@@ -48,7 +50,7 @@ class CWLSegmentationWorkflow:
         self.df_pattern = df_pattern
         self.group_by = group_by
         self.wic_path = api._WIC_PATH
-        self.PATH = Path(self.wic_path.parent).joinpath(Path(__file__).parts[-3])
+        self.PATH = Path(self.wic_path.parent).joinpath("image-workflows")
         self.cwl_path, self.workflow_path = self._create_directories()
         self.image_pattern = image_pattern
         self.seg_pattern = seg_pattern
@@ -226,6 +228,7 @@ class CWLSegmentationWorkflow:
             kaggle_nuclei_segmentation,
             ftl_plugin
         ]
+
         workflow = api.Workflow(steps, "experiment", self.workflow_path)
         # # Saving CLT for plugins
         workflow._save_all_cwl(overwrite=True)
