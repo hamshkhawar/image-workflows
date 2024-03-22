@@ -1,2 +1,3 @@
-import cwl_features_extraction as cwl_features_extraction
+import cwl_analysis as cwl_analysis
+import cwl_nuclear_segmentation as cwl_nuclear_segmentation
 import utils as utils

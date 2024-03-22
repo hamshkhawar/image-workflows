@@ -1,4 +1,4 @@
-# Common Workflow Language (CWL) Feature Extraction worflow
+# Common Workflow Language (CWL) Workflows
 
 CWL feature extraction workflow for imaging dataset
 
@@ -41,11 +41,16 @@ Below are the specifics of the plugins employed in the workflow
 7. [polus-ftl-label-plugin](https://github.com/hamshkhawar/image-tools/tree/kaggle-nuclei_seg/transforms/images/polus-ftl-label-plugin)
 8. [nyxus-plugin](https://github.com/PolusAI/image-tools/tree/kaggle-nuclei_seg/features/nyxus-plugin)
 
-## Execute CWL feature extraction workflow
+## Execute CWL workflows
+Three different CWL workflows can be executed for specific datasets
+1. segmentation
+2. analysis
 
-The parameters for each imaging dataset are pre-defined and stored in JSON format. A Pydantic model in a utils Python file can be utilized to store parameters for any new dataset
+During the execution of the segmentation workflow, `1 to 7` plugins will be utilized. However, for executing the analysis workflow, `1 to 8` plugins will be employed.
+If a user wishes to execute a workflow for a new dataset, they can utilize a sample YAML file to input parameter values. This YAML file can be saved in the desired subdirectory of the `configuration` folder with the name `dataset.yml`
 
-`python cwl_workflows/__main__.py --name="BBBC039" --workflow=feature`
+
+`python cwl_workflows/__main__.py --name="BBBC039" --workflow=analysis`
 
 A directory named `workflow` is generated, encompassing CLTs for each plugin, YAML files, and all outputs are stored within the `outdir` directory.
 ```
@@ -91,3 +96,5 @@ workflows
                 └── nyxus_plugin.outDir
 
 ```
+#### Note:
+Step 7 and step 8 are executed only in the case of the `analysis` workflow.

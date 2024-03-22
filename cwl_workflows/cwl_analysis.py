@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class CWLFeatureWorkflow:
+class CWLAnalysisWorkflow:
     """
-    A CWL feature extraction pipeline.
+    A CWL feature extraction or Analysis pipeline.
 
     Attributes:
         name : Name of imaging dataset of Broad Bioimage Benchmark Collection (https://bbbc.broadinstitute.org/image_sets).
@@ -224,7 +224,7 @@ class CWLFeatureWorkflow:
         ftl_plugin.binarizationThreshold = 0.5
         ftl_plugin.outDir = Path("ftl_plugin.outDir")
 
-        # ## Nyxus Plugin
+        # # ## Nyxus Plugin
         nyxus_plugin = self.create_step(self.manifest_urls("nyxus_plugin"))
         nyxus_plugin.inpDir = apply_flatfield.outDir
         nyxus_plugin.segDir = ftl_plugin.outDir
@@ -260,6 +260,6 @@ class CWLFeatureWorkflow:
         # # clean autognerated directories
         self._clean()
         self._move_outputs()
-        logger.info("Completed CWL Feature Extraction Workflow.")
+        logger.info("Completed CWL Feature Extraction /Analysis Workflow.")
         return
     

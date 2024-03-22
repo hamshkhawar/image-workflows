@@ -1,9 +1,11 @@
 """CWL Workflow."""
 import logging
 import typer
-from utils import FEAT_JSON_FILENAME
-from utils import LoadData
-from cwl_features_extraction import CWLFeatureWorkflow
+from utils import LoadYaml
+from cwl_analysis import CWLAnalysisWorkflow
+from cwl_nuclear_segmentation import CWLSegmentationWorkflow
+from pathlib import Path
+
 
 
 app = typer.Typer()
@@ -38,13 +40,22 @@ def main(
     logger.info(f"name = {name}")
     logger.info(f"workflow = {workflow}")
 
-    
-    if workflow == "feature":
-        model = LoadData(path=FEAT_JSON_FILENAME, name= name)
-        params = model.parse_json()
+    config_path = Path.cwd().joinpath(f"configuration/{workflow}/{name}.yml")
+
+
+    model = LoadYaml(workflow=workflow, config_path=config_path)
+    params = model.parse_yaml()
+
+    if workflow == "analysis":
         logger.info(f"Executing {workflow}!!!")
-        model = CWLFeatureWorkflow(**params)
+        model = CWLAnalysisWorkflow(**params)
         model.workflow()
+
+    if workflow == "segmentation":
+        logger.info(f"Executing {workflow}!!!")
+        model = CWLSegmentationWorkflow(**params)
+        model.workflow()
+
 
     logger.info("Completed CWL workflow!!!")
 

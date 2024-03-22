@@ -1,63 +1,70 @@
-import json
 import pydantic
 from pathlib import Path
 from typing import Dict
 from typing import Union
+import yaml
+
 
 GITHUB_TAG = "https://raw.githubusercontent.com"
+
+CONFIGURATION_FILENAME =Path.cwd().joinpath("bbbc_json/bbbc_cwl_configuration.json")
+
+ANALYSIS_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory", "features", "file_extension"]
+SEG_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory"]
+
 
 
 class DataModel(pydantic.BaseModel):
     data: Dict[str, Dict[str, Union[str, bool]]]
 
 
-class LoadData(pydantic.BaseModel):
-    path: Union[str, Path]
-    name:str
 
-    @pydantic.validator("path", pre=True)
+class LoadYaml(pydantic.BaseModel):
+    """Validation of Dataset yaml."""
+    workflow:str
+    config_path: Union[str, Path]
+
+    @pydantic.validator("config_path", pre=True)
     @classmethod
     def validate_path(cls, value: Union[str, Path]) -> Union[str, Path]:
         """Validation of Paths."""
         if not Path(value).exists():
-            msg = f"{value} do not exist! Please do check it again"
+            msg = f"{value} does not exist! Please do check it again"
             raise ValueError(msg)
         if isinstance(value, str):
             return Path(value)
         return value
-
-    def parse_json(self) -> Dict[str, Union[str, bool]]:
-        with open(self.path) as json_file:
-            # Read the JSON data
-            data = json.load(json_file)
-        params = [v[self.name] for k, v in data.items()][0]
-        if len(params) == 0:
-            msg = f"{self.name} dataset donot exist! Please do check it again"
+    
+    @pydantic.validator("workflow", pre=True)
+    @classmethod
+    def validate_workflow_name(cls, value: str) -> str:
+        """Validation of workflow name."""
+        if not value in ["analysis", "segmentation", "visualization"]:
+            msg = f"Please choose a valid workflow name i-e analysis segmentation visualization"
             raise ValueError(msg)
-        return params
+        return value
 
+    def parse_yaml(self) -> Dict[str, Union[str, bool]]:
+        """Parsing yaml configuration file for each dataset."""
 
-feat_params = {
-    "BBBC039": {
-        "name": "BBBC039",
-        "file_pattern": "/.*/.*/.*/Images/(?P<directory>.*)/.*_{row:c}{col:dd}_s{s:d}_w{channel:d}.*.tif",
-        "out_file_pattern": "x{row:dd}_y{col:dd}_p{s:dd}_c{channel:d}.tif",
-        "image_pattern": "images_x{x:dd}_y{y:dd}_p{p:dd}_c{c:d}.ome.tif",
-        "seg_pattern":"images_x{x:dd}_y{y:dd}_p{p:dd}_c1.ome.tif",
-        "ff_pattern": "images_x\\(00-15\\)_y\\(01-24\\)_p0\\(1-9\\)_c{c:d}_flatfield.ome.tif",
-        "df_pattern": "images_x\\(00-15\\)_y\\(01-24\\)_p0\\(1-9\\)_c{c:d}_darkfield.ome.tif",
-        "group_by": "c",
-        "map_directory": False,
-        "features": "ALL_INTENSITY,ALL_MORPHOLOGY",
-        "file_extension": "pandas"
-    }
-}
-model = DataModel(data=feat_params)
-model_dict = model.dict()
+        with open(f'{self.config_path}','r') as f: 
+            data = yaml.safe_load(f)
 
-json_dir = Path(Path(__file__).parents[1]).joinpath("bbbc_json")
-json_dir.mkdir(parents=True, exist_ok=True)
-FEAT_JSON_FILENAME = json_dir.joinpath("bbbc_feature.json")
+        check_values = any([v for _, v in data.items() if f is None])
 
-with Path.open(FEAT_JSON_FILENAME, "w") as json_file:
-    json.dump(model_dict, json_file, indent=2)
+        if check_values is True:
+            msg = f"All the parameters are not defined! Please do check it again"
+            raise ValueError(msg)
+        
+        
+        if self.workflow == "analysis":
+            if list(data.keys()) != ANALYSIS_KEYS:
+                msg = f"Please do check parameters again for analysis workflow!!"
+                raise ValueError(msg)
+
+        if self.workflow == "segmentation":
+            if list(data.keys()) != SEG_KEYS:
+                msg = f"Please do check parameters again for segmentation workflow!!"
+                raise ValueError(msg)
+            
+        return data
