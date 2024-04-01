@@ -1,13 +1,11 @@
 """CWL Workflow."""
 import logging
 import typer
-import sys
-sys.path.append('../')
-from cwl_workflows.utils import LoadYaml
-from cwl_workflows.cwl_analysis import CWLAnalysisWorkflow
-from cwl_workflows.cwl_nuclear_segmentation import CWLSegmentationWorkflow
 from pathlib import Path
-
+from polus.image.workflows.utils import LoadYaml
+from workflows.cwl_analysis import CWLAnalysisWorkflow
+from workflows.cwl_nuclear_segmentation import CWLSegmentationWorkflow
+from pathlib import Path
 
 
 app = typer.Typer()
@@ -42,7 +40,8 @@ def main(
     logger.info(f"name = {name}")
     logger.info(f"workflow = {workflow}")
 
-    config_path = Path.cwd().parent.joinpath(f"configuration/{workflow}/{name}.yml")
+    config_path = Path(__file__).parent.parent.parent.parent.parent.joinpath(f"configuration/{workflow}/{name}.yml")
+    print(config_path)
 
 
     model = LoadYaml(workflow=workflow, config_path=config_path)

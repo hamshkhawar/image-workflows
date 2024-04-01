@@ -3,21 +3,21 @@ import polus.plugins as pp
 from pathlib import Path
 import yaml
 import logging
-import typing
 import re
 import shutil
+import typing
 import sys
 sys.path.append('../')
-from cwl_workflows.utils import GITHUB_TAG
+from polus.image.workflows.utils import GITHUB_TAG
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class CWLSegmentationWorkflow:
+class CWLAnalysisWorkflow:
     """
-    A CWL Nuclear Segmentation pipeline.
+    A CWL feature extraction or Analysis pipeline.
 
     Attributes:
         name : Name of imaging dataset of Broad Bioimage Benchmark Collection (https://bbbc.broadinstitute.org/image_sets).
@@ -25,10 +25,12 @@ class CWLSegmentationWorkflow:
         out_file_pattern : Preferred format for filenames
         image_pattern : Pattern for parsing intensity image filenames after renaming when using map_directory
         seg_pattern : Pattern use to parse segmentation image filenames
-        map_directory :  Mapping of folder name
+        map_directory : Mapping of folder name
         ff_pattern: The filename pattern employed to select flatfield components from the ffDir.
         df_pattern:The filename pattern employed to select darkfield components from the ffDir
         group_by: Grouping variables for filePattern
+        features:Features from Nyxus (https://github.com/PolusAI/nyxus/) that need extraction
+        file_extension: Output file format
     """
     def __init__(
         self,
@@ -41,11 +43,13 @@ class CWLSegmentationWorkflow:
         df_pattern: str,
         group_by: str,
         map_directory: typing.Optional[bool] = False,
+        features: typing.Optional[str]="ALL",
+        file_extension: typing.Optional[str]="arrowipc",
+
     ):
         self.name = name
         self.file_pattern = file_pattern
         self.out_file_pattern = out_file_pattern
-        self.map_directory = map_directory
         self.ff_pattern = ff_pattern
         self.df_pattern = df_pattern
         self.group_by = group_by
@@ -54,12 +58,15 @@ class CWLSegmentationWorkflow:
         self.cwl_path, self.workflow_path = self._create_directories()
         self.image_pattern = image_pattern
         self.seg_pattern = seg_pattern
+        self.features = features
+        self.file_extension = file_extension
+        self.map_directory = map_directory
 
     def _create_directories(self) -> None:
         """Create directories for CWL outputs"""
         cwl_path = self.PATH.joinpath("cwl_adapters")
         cwl_path.mkdir(parents=True, exist_ok=True)
-        workflow_path = self.PATH.joinpath("workflows").resolve()
+        workflow_path = self.PATH.joinpath("outputs").resolve()
         workflow_path.mkdir(exist_ok=True)
         return cwl_path, workflow_path
 
@@ -131,6 +138,7 @@ class CWLSegmentationWorkflow:
 
     def manifest_urls(self, x: str) -> str:
         """URLs on GitHub for plugin manifests"""
+
         urls = {
             "bbbc_download": f"{GITHUB_TAG}/saketprem/polus-plugins/bbbc_download/utils/bbbc-download-plugin/plugin.json",
             "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/filepattern_filerenaming/formats/file-renaming-tool/plugin.json",
@@ -138,7 +146,8 @@ class CWLSegmentationWorkflow:
             "estimate_flatfield": f"{GITHUB_TAG}/nishaq503/image-tools/fix/basic/regression/basic-flatfield-estimation-tool/plugin.json",
             "apply_flatfield": f"{GITHUB_TAG}/hamshkhawar/image-tools/cast_images/transforms/images/apply-flatfield-tool/plugin.json",
             "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/kaggle-nucleiseg/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",
-            "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json"
+            "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json",
+            "nyxus_plugin": f"{GITHUB_TAG}/hamshkhawar/image-tools/nyxus_manifest/features/nyxus-plugin/plugin.json",
         }
         return urls[x]
 
@@ -163,7 +172,7 @@ class CWLSegmentationWorkflow:
 
     def workflow(self) -> None:
         """
-        A CWL nuclear segmentation pipeline.
+        A CWL feature extraction pipeline.
         """
         # BBBCDownload
         bbbc = self.create_step(self.manifest_urls("bbbc_download"))
@@ -207,6 +216,7 @@ class CWLSegmentationWorkflow:
         kaggle_nuclei_segmentation = self.create_step(
             self.manifest_urls("kaggle_nuclei_segmentation")
         )
+
         kaggle_nuclei_segmentation.inpDir = apply_flatfield.outDir
         kaggle_nuclei_segmentation.filePattern = self.image_pattern
         kaggle_nuclei_segmentation.outDir = Path("kaggle_nuclei_segmentation.outDir")
@@ -218,7 +228,19 @@ class CWLSegmentationWorkflow:
         ftl_plugin.binarizationThreshold = 0.5
         ftl_plugin.outDir = Path("ftl_plugin.outDir")
 
-        logger.info("Initiating CWL Nuclear Segmentation Workflow!!!")
+        # # ## Nyxus Plugin
+        nyxus_plugin = self.create_step(self.manifest_urls("nyxus_plugin"))
+        nyxus_plugin.inpDir = apply_flatfield.outDir
+        nyxus_plugin.segDir = ftl_plugin.outDir
+        nyxus_plugin.intPattern = self.image_pattern
+        nyxus_plugin.segPattern = self.seg_pattern
+        nyxus_plugin.features = self.features
+        nyxus_plugin.fileExtension = self.file_extension
+        nyxus_plugin.neighborDist = 5
+        nyxus_plugin.pixelPerMicron = 1.0
+        nyxus_plugin.outDir =  Path("nyxus_plugin.outDir")
+
+        logger.info("Initiating CWL Feature Extraction Workflow!!!")
         steps = [
             bbbc,
             rename,
@@ -226,9 +248,9 @@ class CWLSegmentationWorkflow:
             estimate_flatfield,
             apply_flatfield,
             kaggle_nuclei_segmentation,
-            ftl_plugin
+            ftl_plugin,
+            nyxus_plugin
         ]
-
         workflow = api.Workflow(steps, "experiment", self.workflow_path)
         # # Saving CLT for plugins
         workflow._save_all_cwl(overwrite=True)
@@ -242,5 +264,6 @@ class CWLSegmentationWorkflow:
         # # clean autognerated directories
         self._clean()
         self._move_outputs()
-        logger.info("Completed CWL nuclear segmentation workflow.")
+        logger.info("Completed CWL Feature Extraction /Analysis Workflow.")
         return
+    

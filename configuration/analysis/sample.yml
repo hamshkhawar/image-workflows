@@ -1,6 +1,6 @@
 ---
 name : 
-file_pattern : 
+file_pattern :
 out_file_pattern : 
 image_pattern: 
 seg_pattern: 
