@@ -8,7 +8,7 @@ import shutil
 import typing
 import sys
 sys.path.append('../')
-from cwl_workflows.utils import GITHUB_TAG
+from polus.image.workflows.utils import GITHUB_TAG
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
@@ -31,6 +31,7 @@ class CWLAnalysisWorkflow:
         group_by: Grouping variables for filePattern
         features:Features from Nyxus (https://github.com/PolusAI/nyxus/) that need extraction
         file_extension: Output file format
+        background_correction: Execute background correction
     """
     def __init__(
         self,
@@ -39,12 +40,14 @@ class CWLAnalysisWorkflow:
         out_file_pattern: str,
         image_pattern: str,
         seg_pattern: str,
-        ff_pattern: str,
-        df_pattern: str,
-        group_by: str,
+        ff_pattern: typing.Optional[str] = '',
+        df_pattern: typing.Optional[str] = '',
+        group_by: typing.Optional[str] = '',
         map_directory: typing.Optional[bool] = False,
         features: typing.Optional[str]="ALL",
-        file_extension: typing.Optional[str]="arrowipc"
+        file_extension: typing.Optional[str]="arrowipc",
+        background_correction: typing.Optional[bool] = False
+
     ):
         self.name = name
         self.file_pattern = file_pattern
@@ -60,6 +63,7 @@ class CWLAnalysisWorkflow:
         self.features = features
         self.file_extension = file_extension
         self.map_directory = map_directory
+        self.background_correction = background_correction
 
     def _create_directories(self) -> None:
         """Create directories for CWL outputs"""
@@ -193,29 +197,33 @@ class CWLAnalysisWorkflow:
         ome_converter.inpDir = rename.outDir
         ome_converter.outDir = Path("ome_converter.outDir")
 
-        # Estimate Flatfield
-        estimate_flatfield = self.create_step(self.manifest_urls("estimate_flatfield"))
-        estimate_flatfield.inpDir = ome_converter.outDir
-        estimate_flatfield.filePattern = self.image_pattern
-        estimate_flatfield.groupBy = self.group_by
-        estimate_flatfield.getDarkfield = True
-        estimate_flatfield.outDir = Path("estimate_flatfield.outDir")
+        if self.background_correction:
+            # Estimate Flatfield
+            estimate_flatfield = self.create_step(self.manifest_urls("estimate_flatfield"))
+            estimate_flatfield.inpDir = ome_converter.outDir
+            estimate_flatfield.filePattern = self.image_pattern
+            estimate_flatfield.groupBy = self.group_by
+            estimate_flatfield.getDarkfield = True
+            estimate_flatfield.outDir = Path("estimate_flatfield.outDir")
 
-        # # Apply Flatfield
-        apply_flatfield = self.create_step(self.manifest_urls("apply_flatfield"))
-        apply_flatfield.imgDir = ome_converter.outDir
-        apply_flatfield.imgPattern = self.image_pattern
-        apply_flatfield.ffDir = estimate_flatfield.outDir
-        apply_flatfield.ffPattern = self.ff_pattern
-        apply_flatfield.dfPattern = self.df_pattern
-        apply_flatfield.outDir = Path("apply_flatfield.outDir")
-        apply_flatfield.dataType = True
+            # # Apply Flatfield
+            apply_flatfield = self.create_step(self.manifest_urls("apply_flatfield"))
+            apply_flatfield.imgDir = ome_converter.outDir
+            apply_flatfield.imgPattern = self.image_pattern
+            apply_flatfield.ffDir = estimate_flatfield.outDir
+            apply_flatfield.ffPattern = self.ff_pattern
+            apply_flatfield.dfPattern = self.df_pattern
+            apply_flatfield.outDir = Path("apply_flatfield.outDir")
+            apply_flatfield.dataType = True
 
         ## Kaggle Nuclei Segmentation
         kaggle_nuclei_segmentation = self.create_step(
             self.manifest_urls("kaggle_nuclei_segmentation")
         )
-        kaggle_nuclei_segmentation.inpDir = apply_flatfield.outDir
+        if self.background_correction:
+            kaggle_nuclei_segmentation.inpDir = apply_flatfield.outDir
+        else:
+            kaggle_nuclei_segmentation.inpDir = ome_converter.outDir
         kaggle_nuclei_segmentation.filePattern = self.image_pattern
         kaggle_nuclei_segmentation.outDir = Path("kaggle_nuclei_segmentation.outDir")
 
@@ -228,7 +236,10 @@ class CWLAnalysisWorkflow:
 
         # # ## Nyxus Plugin
         nyxus_plugin = self.create_step(self.manifest_urls("nyxus_plugin"))
-        nyxus_plugin.inpDir = apply_flatfield.outDir
+        if self.background_correction:
+            nyxus_plugin.inpDir = apply_flatfield.outDir
+        else:
+            nyxus_plugin.inpDir = ome_converter.outDir
         nyxus_plugin.segDir = ftl_plugin.outDir
         nyxus_plugin.intPattern = self.image_pattern
         nyxus_plugin.segPattern = self.seg_pattern
@@ -239,16 +250,27 @@ class CWLAnalysisWorkflow:
         nyxus_plugin.outDir =  Path("nyxus_plugin.outDir")
 
         logger.info("Initiating CWL Feature Extraction Workflow!!!")
-        steps = [
-            bbbc,
-            rename,
-            ome_converter,
-            estimate_flatfield,
-            apply_flatfield,
-            kaggle_nuclei_segmentation,
-            ftl_plugin,
-            nyxus_plugin
-        ]
+        if self.background_correction:
+            steps = [
+                bbbc,
+                rename,
+                ome_converter,
+                estimate_flatfield,
+                apply_flatfield,
+                kaggle_nuclei_segmentation,
+                ftl_plugin,
+                nyxus_plugin
+            ]
+        else:
+            steps = [
+                bbbc,
+                rename,
+                ome_converter,
+                kaggle_nuclei_segmentation,
+                ftl_plugin,
+                nyxus_plugin
+            ]
+
         workflow = api.Workflow(steps, "experiment", self.workflow_path)
         # # Saving CLT for plugins
         workflow._save_all_cwl(overwrite=True)

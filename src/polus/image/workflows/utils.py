@@ -7,16 +7,13 @@ import yaml
 
 GITHUB_TAG = "https://raw.githubusercontent.com"
 
-CONFIGURATION_FILENAME =Path.cwd().joinpath("bbbc_json/bbbc_cwl_configuration.json")
 
-ANALYSIS_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory", "features", "file_extension"]
-SEG_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory"]
-
+ANALYSIS_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory", "features", "file_extension", "background_correction"]
+SEG_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory", "background_correction"]
 
 
 class DataModel(pydantic.BaseModel):
     data: Dict[str, Dict[str, Union[str, bool]]]
-
 
 
 class LoadYaml(pydantic.BaseModel):
@@ -58,13 +55,14 @@ class LoadYaml(pydantic.BaseModel):
         
         
         if self.workflow == "analysis":
-            if list(data.keys()) != ANALYSIS_KEYS:
-                msg = f"Please do check parameters again for analysis workflow!!"
-                raise ValueError(msg)
+            if data['background_correction'] == True:
+                if list(data.keys()) != ANALYSIS_KEYS:
+                    msg = f"Please do check parameters again for analysis workflow!!"
+                    raise ValueError(msg)
 
         if self.workflow == "segmentation":
-            if list(data.keys()) != SEG_KEYS:
-                msg = f"Please do check parameters again for segmentation workflow!!"
-                raise ValueError(msg)
-            
+            if data['background_correction'] == True:
+                if list(data.keys()) != SEG_KEYS:
+                    msg = f"Please do check parameters again for segmentation workflow!!"
+                    raise ValueError(msg)
         return data

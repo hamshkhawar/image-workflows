@@ -1,6 +1,6 @@
 ---
 name : 
-file_pattern : 
+file_pattern :
 out_file_pattern : 
 image_pattern: 
 seg_pattern: 
@@ -10,3 +10,4 @@ group_by:
 map_directory: 
 features: 
 file_extension: 
+background_correction:

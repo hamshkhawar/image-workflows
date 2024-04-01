@@ -23,6 +23,10 @@ create a [Conda](https://conda.io/projects/conda/en/latest/user-guide/tasks/mana
 `git checkout -b hd2  remotes/origin/hd2`
 - `pip install -e ".[all]"`
 
+#### 3. Install image-workflow.
+- cd `image-workflows`
+- poetry install
+
 #### Note:
 Ensure that the [docker-desktop](https://www.docker.com/products/docker-desktop/) is running in the background. To verify that it's operational, you can use the following command:
 `docker run -d -p 80:80 docker/getting-started` 
@@ -49,12 +53,13 @@ Three different CWL workflows can be executed for specific datasets
 During the execution of the segmentation workflow, `1 to 7` plugins will be utilized. However, for executing the analysis workflow, `1 to 8` plugins will be employed.
 If a user wishes to execute a workflow for a new dataset, they can utilize a sample YAML file to input parameter values. This YAML file can be saved in the desired subdirectory of the `configuration` folder with the name `dataset.yml`
 
+If a user opts to run a workflow without background correction, they can set `background_correction` to false. In this case, the workflow will skip steps `4 and 5`
 
-`python src/__main__.py --name="BBBC039" --workflow=analysis`
+`python -m polus.image.workflows  --name="BBBC001" --workflow=analysis`
 
-A directory named `workflow` is generated, encompassing CLTs for each plugin, YAML files, and all outputs are stored within the `outdir` directory.
+A directory named `outputs` is generated, encompassing CLTs for each plugin, YAML files, and all outputs are stored within the `outdir` directory.
 ```
-workflows
+outputs
 ├── experiment
 │   └── cwl_adapters
 |   experiment.cwl
