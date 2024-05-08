@@ -1,5 +1,5 @@
 import wic.api.pythonapi as api
-import polus.plugins as pp
+# import polus.plugins as pp
 from pathlib import Path
 import yaml
 import logging
@@ -116,15 +116,15 @@ class CWLSegmentationWorkflow:
         )
         return result
 
-    def create_step(self, url: str) -> api.Step:
-        """Generate the plugin class name from the plugin name specified in the manifest"""
-        manifest = pp.submit_plugin(url)
-        plugin_version = str(manifest.version)
-        cwl_tool = pp.get_plugin(self._camel(manifest.name), plugin_version).save_cwl(
-            self.cwl_path.joinpath(f"{self._camel(manifest.name)}.cwl")
-        )
-        # step = api.Step(cwl_tool)
-        return cwl_tool
+    # def create_step(self, url: str) -> api.Step:
+    #     """Generate the plugin class name from the plugin name specified in the manifest"""
+    #     manifest = pp.submit_plugin(url)
+    #     plugin_version = str(manifest.version)
+    #     cwl_tool = pp.get_plugin(self._camel(manifest.name), plugin_version).save_cwl(
+    #         self.cwl_path.joinpath(f"{self._camel(manifest.name)}.cwl")
+    #     )
+    #     # step = api.Step(cwl_tool)
+    #     return cwl_tool
 
     def manifest_urls(self, x: str) -> str:
         """URLs on GitHub for plugin manifests"""
@@ -162,20 +162,20 @@ class CWLSegmentationWorkflow:
         """
         A CWL nuclear segmentation pipeline.
         """
-        # # BBBCDownload
-        bbbc = self.create_step(self.manifest_urls("bbbc_download"))
-        # bbbc.name = self.name
-        # bbbc.outDir = Path("bbbc.outDir")
+        # # # BBBCDownload
+        # bbbc = self.create_step(self.manifest_urls("bbbc_download"))
+        # # bbbc.name = self.name
+        # # bbbc.outDir = Path("bbbc.outDir")
 
-        # # Renaming plugin
-        rename = self.create_step(self.manifest_urls("file_renaming"))
-        # rename.filePattern = self.file_pattern
-        # rename.outFilePattern = self.out_file_pattern
-        # rename.mapDirectory = self.map_directory
-        # rename.inpDir = bbbc.outDir
-        # rename.outDir = Path("rename.outDir")
+        # # # Renaming plugin
+        # rename = self.create_step(self.manifest_urls("file_renaming"))
+        # # rename.filePattern = self.file_pattern
+        # # rename.outFilePattern = self.out_file_pattern
+        # # rename.mapDirectory = self.map_directory
+        # # rename.inpDir = bbbc.outDir
+        # # rename.outDir = Path("rename.outDir")
 
-        self.modify_cwl()
+        # self.modify_cwl()
 
         
         # # OMEConverter
