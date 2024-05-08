@@ -11,8 +11,6 @@ python = ">=3.9,<3.12"
 typer = "^0.9.0"
 pyyaml = "^6.0.1"
 pydantic = "^2.6.1"
-cwl-utils="0.31"
-toil="^5.12"
 polus-plugins = {path = "../image-tools", develop = true}
 workflow-inference-compiler = {path = "../workflow-inference-compiler", develop = true}
 

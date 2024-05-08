@@ -123,8 +123,8 @@ class CWLSegmentationWorkflow:
         cwl_tool = pp.get_plugin(self._camel(manifest.name), plugin_version).save_cwl(
             self.cwl_path.joinpath(f"{self._camel(manifest.name)}.cwl")
         )
-        step = api.Step(cwl_tool)
-        return step
+        # step = api.Step(cwl_tool)
+        return cwl_tool
 
     def manifest_urls(self, x: str) -> str:
         """URLs on GitHub for plugin manifests"""
@@ -162,84 +162,107 @@ class CWLSegmentationWorkflow:
         """
         A CWL nuclear segmentation pipeline.
         """
-        # BBBCDownload
+        # # BBBCDownload
         bbbc = self.create_step(self.manifest_urls("bbbc_download"))
-        bbbc.name = self.name
-        bbbc.outDir = Path("bbbc.outDir")
+        # bbbc.name = self.name
+        # bbbc.outDir = Path("bbbc.outDir")
 
-        # Renaming plugin
+        # # Renaming plugin
         rename = self.create_step(self.manifest_urls("file_renaming"))
+        # rename.filePattern = self.file_pattern
+        # rename.outFilePattern = self.out_file_pattern
+        # rename.mapDirectory = self.map_directory
+        # rename.inpDir = bbbc.outDir
+        # rename.outDir = Path("rename.outDir")
+
+        self.modify_cwl()
+
+        
+        # # OMEConverter
+        # ome_converter = self.create_step(self.manifest_urls("ome_converter"))
+        # ome_converter.filePattern = self._string_after_period(self.out_file_pattern)
+        # ome_converter.fileExtension = ".ome.tif"
+        # ome_converter.inpDir = rename.outDir
+        # ome_converter.outDir = Path("ome_converter.outDir")
+
+        # # Estimate Flatfield
+        # estimate_flatfield = self.create_step(self.manifest_urls("estimate_flatfield"))
+        # estimate_flatfield.inpDir = ome_converter.outDir
+        # estimate_flatfield.filePattern = self.image_pattern
+        # estimate_flatfield.groupBy = self.group_by
+        # estimate_flatfield.getDarkfield = True
+        # estimate_flatfield.outDir = Path("estimate_flatfield.outDir")
+
+        # # # Apply Flatfield
+        # apply_flatfield = self.create_step(self.manifest_urls("apply_flatfield"))
+        # apply_flatfield.imgDir = ome_converter.outDir
+        # apply_flatfield.imgPattern = self.image_pattern
+        # apply_flatfield.ffDir = estimate_flatfield.outDir
+        # apply_flatfield.ffPattern = self.ff_pattern
+        # apply_flatfield.dfPattern = self.df_pattern
+        # apply_flatfield.outDir = Path("apply_flatfield.outDir")
+        # apply_flatfield.dataType = True
+
+        # ## Kaggle Nuclei Segmentation
+        # kaggle_nuclei_segmentation = self.create_step(
+        #     self.manifest_urls("kaggle_nuclei_segmentation")
+        # )
+        # kaggle_nuclei_segmentation.inpDir = apply_flatfield.outDir
+
+        # kaggle_nuclei_segmentation.filePattern = self.image_pattern
+        # kaggle_nuclei_segmentation.outDir = Path("kaggle_nuclei_segmentation.outDir")
+
+        # ## FTL Label Plugin
+        # ftl_plugin = self.create_step(self.manifest_urls("ftl_plugin"))
+        # ftl_plugin.inpDir = kaggle_nuclei_segmentation.outDir
+        # ftl_plugin.connectivity = 1
+        # ftl_plugin.binarizationThreshold = 0.5
+        # ftl_plugin.outDir = Path("ftl_plugin.outDir")
+
+        # logger.info("Initiating CWL Nuclear Segmentation Workflow!!!")
+        # steps = [
+        #     bbbc,
+        #     # rename,
+        #     # ome_converter,
+        #     # estimate_flatfield,
+        #     # apply_flatfield,
+        #     # kaggle_nuclei_segmentation,
+        #     # ftl_plugin
+        # ]
+        bbbc = api.Step(clt_path='/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/cwl_adapters/BbbcDownload.cwl')
+        # We can inline the inputs to each step individually.
+        bbbc.name = 'BBBC001'
+        bbbc.outDir = Path('bbbc.outDir')
+
+
+        rename = api.Step(clt_path='/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/cwl_adapters/FileRenaming.cwl')
         rename.filePattern = self.file_pattern
         rename.outFilePattern = self.out_file_pattern
         rename.mapDirectory = self.map_directory
         rename.inpDir = bbbc.outDir
         rename.outDir = Path("rename.outDir")
 
-        
-        # OMEConverter
-        ome_converter = self.create_step(self.manifest_urls("ome_converter"))
-        ome_converter.filePattern = self._string_after_period(self.out_file_pattern)
-        ome_converter.fileExtension = ".ome.tif"
-        ome_converter.inpDir = rename.outDir
-        ome_converter.outDir = Path("ome_converter.outDir")
-
-        # Estimate Flatfield
-        estimate_flatfield = self.create_step(self.manifest_urls("estimate_flatfield"))
-        estimate_flatfield.inpDir = ome_converter.outDir
-        estimate_flatfield.filePattern = self.image_pattern
-        estimate_flatfield.groupBy = self.group_by
-        estimate_flatfield.getDarkfield = True
-        estimate_flatfield.outDir = Path("estimate_flatfield.outDir")
-
-        # # Apply Flatfield
-        apply_flatfield = self.create_step(self.manifest_urls("apply_flatfield"))
-        apply_flatfield.imgDir = ome_converter.outDir
-        apply_flatfield.imgPattern = self.image_pattern
-        apply_flatfield.ffDir = estimate_flatfield.outDir
-        apply_flatfield.ffPattern = self.ff_pattern
-        apply_flatfield.dfPattern = self.df_pattern
-        apply_flatfield.outDir = Path("apply_flatfield.outDir")
-        apply_flatfield.dataType = True
-
-        ## Kaggle Nuclei Segmentation
-        kaggle_nuclei_segmentation = self.create_step(
-            self.manifest_urls("kaggle_nuclei_segmentation")
-        )
-        kaggle_nuclei_segmentation.inpDir = apply_flatfield.outDir
-
-        kaggle_nuclei_segmentation.filePattern = self.image_pattern
-        kaggle_nuclei_segmentation.outDir = Path("kaggle_nuclei_segmentation.outDir")
-
-        ## FTL Label Plugin
-        ftl_plugin = self.create_step(self.manifest_urls("ftl_plugin"))
-        ftl_plugin.inpDir = kaggle_nuclei_segmentation.outDir
-        ftl_plugin.connectivity = 1
-        ftl_plugin.binarizationThreshold = 0.5
-        ftl_plugin.outDir = Path("ftl_plugin.outDir")
-
-        logger.info("Initiating CWL Nuclear Segmentation Workflow!!!")
         steps = [
             bbbc,
-            rename,
-            ome_converter,
-            estimate_flatfield,
-            apply_flatfield,
-            kaggle_nuclei_segmentation,
-            ftl_plugin
+            rename
         ]
 
-        workflow = api.Workflow(steps, "experiment", self.workflow_path)
+        workflow = api.Workflow([], "experiment")
+        for step in steps:
+            workflow.append(step)
         # # Saving CLT for plugins
-        workflow._save_all_cwl(overwrite=True)
-        # # Adding environmental variables for bbbc_download and ome_converter plugin
-        self.modify_cwl()
-        # # # Save yaml to run CWL tool
-        workflow._save_yaml()
-        # Compile and run using WIC python API
-        workflow.compile(run_local=True, overwrite=False)
-        # # print(workflow.yml_path)
-        # # clean autognerated directories
-        self._clean()
-        self._move_outputs()
-        logger.info("Completed CWL nuclear segmentation workflow.")
+        # workflow._save_all_cwl()
+        # # # Adding environmental variables for bbbc_download and ome_converter plugin
+        # self.modify_cwl()
+        
+        # # # # Save yaml to run CWL tool
+        workflow.write_ast_to_disk(directory=Path('/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/outputs'))
+        # workflow.compile(write_to_disk=True)
+        # # Compile and run using WIC python API
+        # workflow.compile(run_local=True, overwrite=False)
+        workflow.run()
+        # # # clean autognerated directories
+        # self._clean()
+        # self._move_outputs()
+        # logger.info("Completed CWL nuclear segmentation workflow.")
         return

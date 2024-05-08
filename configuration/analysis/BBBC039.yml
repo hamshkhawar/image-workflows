@@ -10,3 +10,4 @@ group_by: c
 map_directory: false
 features: "ALL_INTENSITY"
 file_extension: pandas
+background_correction: false
