@@ -229,13 +229,16 @@ class CWLSegmentationWorkflow:
         #     # kaggle_nuclei_segmentation,
         #     # ftl_plugin
         # ]
-        bbbc = api.Step(clt_path='/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/cwl_adapters/BbbcDownload.cwl')
+        root_dir = Path(__file__).parents[1]
+        adapters_path = root_dir.joinpath('cwl_adapters')
+
+        bbbc = api.Step(clt_path=adapters_path.joinpath('BbbcDownload.cwl'))
         # We can inline the inputs to each step individually.
         bbbc.name = 'BBBC001'
         bbbc.outDir = Path('bbbc.outDir')
 
 
-        rename = api.Step(clt_path='/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/cwl_adapters/FileRenaming.cwl')
+        rename = api.Step(clt_path=adapters_path.joinpath('FileRenaming.cwl'))
         rename.filePattern = self.file_pattern
         rename.outFilePattern = self.out_file_pattern
         rename.mapDirectory = self.map_directory
@@ -250,16 +253,16 @@ class CWLSegmentationWorkflow:
         workflow = api.Workflow([], "experiment")
         for step in steps:
             workflow.append(step)
-        # # Saving CLT for plugins
-        # workflow._save_all_cwl()
-        # # # Adding environmental variables for bbbc_download and ome_converter plugin
-        # self.modify_cwl()
+        # # # Saving CLT for plugins
+        # # workflow._save_all_cwl()
+        # # # # Adding environmental variables for bbbc_download and ome_converter plugin
+        # # self.modify_cwl()
         
-        # # # # Save yaml to run CWL tool
-        workflow.write_ast_to_disk(directory=Path('/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/outputs'))
-        # workflow.compile(write_to_disk=True)
-        # # Compile and run using WIC python API
-        # workflow.compile(run_local=True, overwrite=False)
+        # # # # # Save yaml to run CWL tool
+        workflow.write_ast_to_disk(directory=Path(root_dir.joinpath('outputs')))
+        # # workflow.compile(write_to_disk=True)
+        # # # Compile and run using WIC python API
+        # # workflow.compile(run_local=True, overwrite=False)
         workflow.run()
         # # # clean autognerated directories
         # self._clean()
