@@ -1,20 +1,26 @@
 [tool.poetry]
-name = "polus-image-workflows"
+name = "image-workflows"
 version = "0.1.1-dev1"
 description = "Build and execute pipelines of polus plugins on Compute."
 authors = ["Hamdah Shafqat Abbasi <hamdahshafqat.abbasi@nih.gv>"]
 readme = "README.md"
-packages = [{include = "polus", from = "src"}]
+packages = [{include = "image", from = "src"}]
 
 [tool.poetry.dependencies]
 python = ">=3.9,<3.12"
 typer = "^0.9.0"
 pyyaml = "^6.0.1"
 pydantic = "^2.6.1"
-cwl-utils="0.31"
-toil="^5.12"
-polus-plugins = {path = "../image-tools", develop = true}
-workflow-inference-compiler = {path = "../workflow-inference-compiler", develop = true}
+sophios = "^0.1.4"
+cwlref-runner = "1.0"
+cwltool = "^3.1.20240909164951"
+graphviz = "^0.20.3"
+polus-tools = { git = "https://github.com/PolusAI/tools.git" }
+
+
+
+
+
 
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"

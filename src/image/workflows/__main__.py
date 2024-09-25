@@ -2,10 +2,11 @@
 import logging
 import typer
 from pathlib import Path
-from polus.image.workflows.utils import LoadYaml
-from workflows.cwl_analysis import CWLAnalysisWorkflow
-from workflows.cwl_nuclear_segmentation import CWLSegmentationWorkflow
-from pathlib import Path
+from utils import LoadYaml
+# from cwl_analysis import CWLAnalysisWorkflow
+from cwl_nuclear_segmentation import CWLSegmentationWorkflow
+
+
 
 
 app = typer.Typer()
@@ -40,17 +41,17 @@ def main(
     logger.info(f"name = {name}")
     logger.info(f"workflow = {workflow}")
 
-    config_path = Path(__file__).parent.parent.parent.parent.parent.joinpath(f"configuration/{workflow}/{name}.yml")
-    print(config_path)
+    config_path = Path(__file__).parent.parent.parent.parent.joinpath(f"configuration/{workflow}/{name}.yml")
+    
 
 
     model = LoadYaml(workflow=workflow, config_path=config_path)
     params = model.parse_yaml()
 
-    if workflow == "analysis":
-        logger.info(f"Executing {workflow}!!!")
-        model = CWLAnalysisWorkflow(**params)
-        model.workflow()
+    # if workflow == "analysis":
+    #     logger.info(f"Executing {workflow}!!!")
+    #     model = CWLAnalysisWorkflow(**params)
+    #     model.workflow()
 
     if workflow == "segmentation":
         logger.info(f"Executing {workflow}!!!")
@@ -58,7 +59,7 @@ def main(
         model.workflow()
 
 
-    logger.info("Completed CWL workflow!!!")
+    # logger.info("Completed CWL workflow!!!")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
-import wic.api.pythonapi as api
-import polus.plugins as pp
+from sophios.api.pythonapi import Step, Workflow
+import polus.tools.plugins as pp
 from pathlib import Path
 import yaml
 import logging
@@ -7,8 +7,8 @@ import re
 import shutil
 import typing
 import sys
-sys.path.append('../')
-from polus.image.workflows.utils import GITHUB_TAG
+# sys.path.append('../')
+from utils import GITHUB_TAG
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
