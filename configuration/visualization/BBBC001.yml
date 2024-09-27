@@ -9,3 +9,6 @@ df_pattern: "x00_y03_p0\\(0-5\\)_c{c:d}_darkfield.ome.tif"
 group_by: c
 map_directory: false
 background_correction: false
+layout: p
+pyramid_type: Zarr
+image_type: Intensity

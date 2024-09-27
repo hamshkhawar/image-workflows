@@ -7,9 +7,49 @@ import yaml
 
 GITHUB_TAG = "https://raw.githubusercontent.com"
 
+OUT_PATH = Path(__file__).resolve().parents[3]
 
-ANALYSIS_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory", "features", "file_extension", "background_correction"]
-SEG_KEYS = ["name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", "ff_pattern", "df_pattern", "group_by", "map_directory", "background_correction"]
+
+
+MANIFEST_URLS = {
+            "bbbc_download": f"{GITHUB_TAG}/saketprem/polus-plugins/bbbc_download/utils/bbbc-download-plugin/plugin.json",
+            "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/filepattern_filerenaming/formats/file-renaming-tool/plugin.json",
+            "ome_converter": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/formats/ome-converter-tool/plugin.json",
+            "estimate_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/regression/basic-flatfield-estimation-tool/plugin.json",
+            "apply_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/apply-flatfield-tool/plugin.json",
+            "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/kaggle-nucleiseg/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",
+            "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json",
+            "nyxus_plugin": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/nyxus_fix_entrypoint/features/nyxus-tool/plugin.json",
+            "montage_url" :f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/montage-tool/plugin.json",
+            "image_assembler_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/image-assembler-tool/plugin.json",
+            "precompute_slide_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/visualization/precompute-slide-tool/plugin.json"
+        }
+
+
+# Define keys as frozensets for immutability
+ANALYSIS_KEYS = frozenset([
+    "name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", 
+    "ff_pattern", "df_pattern", "group_by", "map_directory", "features", 
+    "file_extension", "background_correction"
+])
+
+SEG_KEYS = frozenset([
+    "name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", 
+    "ff_pattern", "df_pattern", "group_by", "map_directory", "background_correction"
+])
+
+VIZ_KEYS = frozenset([
+    "name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", 
+    "layout", "pyramid_type", "image_type", "ff_pattern", "df_pattern", "group_by", 
+    "map_directory", "background_correction"
+])
+
+# Mapping workflows to their respective keys
+WORKFLOW_KEYS = {
+    "analysis": ANALYSIS_KEYS,
+    "segmentation": SEG_KEYS,
+    "visualization": VIZ_KEYS,
+}
 
 
 class DataModel(pydantic.BaseModel):
@@ -17,52 +57,44 @@ class DataModel(pydantic.BaseModel):
 
 
 class LoadYaml(pydantic.BaseModel):
-    """Validation of Dataset yaml."""
-    workflow:str
+    """Validation of Dataset YAML."""
+    workflow: str
     config_path: Union[str, Path]
 
     @pydantic.validator("config_path", pre=True)
     @classmethod
-    def validate_path(cls, value: Union[str, Path]) -> Union[str, Path]:
-        """Validation of Paths."""
-        if not Path(value).exists():
-            msg = f"{value} does not exist! Please do check it again"
-            raise ValueError(msg)
-        if isinstance(value, str):
-            return Path(value)
-        return value
-    
+    def validate_path(cls, value: Union[str, Path]) -> Path:
+        """Validate the configuration file path."""
+        path = Path(value)
+        if not path.exists():
+            raise ValueError(f"{value} does not exist! Please check the path again.")
+        return path
+
     @pydantic.validator("workflow", pre=True)
     @classmethod
     def validate_workflow_name(cls, value: str) -> str:
-        """Validation of workflow name."""
-        if not value in ["analysis", "segmentation", "visualization"]:
-            msg = f"Please choose a valid workflow name i-e analysis segmentation visualization"
-            raise ValueError(msg)
+        """Validate workflow name."""
+        valid_workflows = WORKFLOW_KEYS.keys()
+        if value not in valid_workflows:
+            raise ValueError(f"Invalid workflow: {value}. Please choose one of {', '.join(valid_workflows)}.")
         return value
 
     def parse_yaml(self) -> Dict[str, Union[str, bool]]:
-        """Parsing yaml configuration file for each dataset."""
-
-        with open(f'{self.config_path}','r') as f: 
+        """Parse the YAML configuration file for each dataset."""
+        with open(self.config_path, 'r') as f:
             data = yaml.safe_load(f)
 
-        check_values = any([v for _, v in data.items() if f is None])
+        # Check missing values in the YAML
+        if any(v is None for v in data.values()):
+            raise ValueError("All parameters are not defined! Please check the YAML file.")
 
-        if check_values is True:
-            msg = f"All the parameters are not defined! Please do check it again"
-            raise ValueError(msg)
+        # Validate keys against the workflow's expected keys
+        self._validate_workflow_keys(data)
         
-        
-        if self.workflow == "analysis":
-            if data['background_correction'] == True:
-                if list(data.keys()) != ANALYSIS_KEYS:
-                    msg = f"Please do check parameters again for analysis workflow!!"
-                    raise ValueError(msg)
-
-        if self.workflow == "segmentation":
-            if data['background_correction'] == True:
-                if list(data.keys()) != SEG_KEYS:
-                    msg = f"Please do check parameters again for segmentation workflow!!"
-                    raise ValueError(msg)
         return data
+
+    def _validate_workflow_keys(self, data: Dict[str, Union[str, bool]]) -> None:
+        """Validate that the keys in the YAML match the expected keys for the selected workflow."""
+        expected_keys = WORKFLOW_KEYS[self.workflow]
+        if data.get("background_correction", False) and set(data.keys()) != expected_keys:
+            raise ValueError(f"Invalid parameters for {self.workflow} workflow. Expected keys: {expected_keys}")

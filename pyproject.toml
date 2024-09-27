@@ -19,9 +19,6 @@ polus-tools = { git = "https://github.com/PolusAI/tools.git" }
 
 
 
-
-
-
 [tool.poetry.group.dev.dependencies]
 jupyter = "^1.0.0"
 nbconvert = "^7.11.0"

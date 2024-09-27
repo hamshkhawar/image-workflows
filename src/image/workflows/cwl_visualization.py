@@ -7,7 +7,7 @@ import yaml
 
 from sophios.api.pythonapi import Step, Workflow
 import polus.tools.plugins as pp
-from image.workflows.utils import OUT_PATH, MANIFEST_URLS
+from image.workflows.utils import OUT_PATH,MANIFEST_URLS
 
 
 # Initialize the logger
@@ -15,9 +15,9 @@ logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class CWLAnalysisWorkflow:
+class CWLVisualizationWorkflow:
     """
-    A CWL feature extraction or Analysis pipeline.
+    A CWL visualization pipeline to process imaging datasets.
     
     Attributes:
         name: Name of the imaging dataset.
@@ -25,13 +25,13 @@ class CWLAnalysisWorkflow:
         out_file_pattern: Desired format for output filenames.
         image_pattern: Pattern for parsing intensity image filenames.
         seg_pattern: Pattern to parse segmentation image filenames.
-        map_directory: Enable mapping of folder names.
+        layout : A list indicating the grid layout.
+        pyramid_type : A list indicating the grid layout.
         ff_pattern: Filename pattern for selecting flatfield components.
         df_pattern: Filename pattern for selecting darkfield components.
         group_by: Variables used for grouping the file pattern.
-        features:Features from Nyxus (https://github.com/PolusAI/nyxus/) that need extraction
-        file_extension: Output file format
         background_correction: Flag to enable background correction.
+        map_directory: Enable mapping of folder names.
         out_dir: Directory for saving outputs.
     """
     def __init__(
@@ -41,12 +41,13 @@ class CWLAnalysisWorkflow:
         out_file_pattern: str,
         image_pattern: str,
         seg_pattern: str,
+        layout: str,
+        pyramid_type: str,
+        image_type: str,
         ff_pattern: typing.Optional[str] = '',
         df_pattern: typing.Optional[str] = '',
         group_by: typing.Optional[str] = '',
         map_directory: typing.Optional[bool] = False,
-        features: typing.Optional[str]="ALL",
-        file_extension: typing.Optional[str]="arrowipc",
         background_correction: typing.Optional[bool] = False,
         out_dir: typing.Optional[Path] = OUT_PATH
     ):
@@ -55,15 +56,16 @@ class CWLAnalysisWorkflow:
         self.out_file_pattern = out_file_pattern
         self.image_pattern = image_pattern
         self.seg_pattern = seg_pattern
+        self.layout = layout
+        self.pyramid_type = pyramid_type
+        self.image_type = image_type
         self.ff_pattern = ff_pattern
         self.df_pattern = df_pattern
         self.group_by = group_by
         self.map_directory = map_directory
-        self.features = features
-        self.file_extension=file_extension
         self.background_correction = background_correction
         self.out_dir = out_dir
-        self.adapters_path = Path(__file__).parent.parent.parent.parent.joinpath("cwl_adapters")
+        self.adapters_path = Path(__file__).resolve().parents[4].joinpath("cwl_adapters")
         self.work_dir = Path.cwd()
 
     def _move_outputs(self) -> None:
@@ -109,6 +111,7 @@ class CWLAnalysisWorkflow:
 
     def _get_manifest_url(self, plugin_name: str) -> str:
         """Retrieve the URL for the plugin manifest from GitHub."""
+
         return MANIFEST_URLS.get(plugin_name, "")
 
     def _modify_cwl(self) -> None:
@@ -127,9 +130,9 @@ class CWLAnalysisWorkflow:
                     logger.error(f"Error processing file: {cwl_file}")
 
     def workflow(self) -> None:
-        """Execute the CWL nuclear segmentation pipeline."""
-        logger.info("Starting CWL nuclear segmentation workflow.")
-
+        """
+        A CWL visualization pipeline.
+        """
         # Step: BBBC Download
         bbbc = self.create_step(self._get_manifest_url("bbbc_download"))
         bbbc.name = self.name
@@ -159,6 +162,7 @@ class CWLAnalysisWorkflow:
             estimate_flatfield.getDarkfield = True
             estimate_flatfield.outDir = Path("estimate_flatfield.outDir")
 
+            # Apply Flatfield
             apply_flatfield = self.create_step(self._get_manifest_url("apply_flatfield"))
             apply_flatfield.imgDir = ome_converter.outDir
             apply_flatfield.imgPattern = self.image_pattern
@@ -167,47 +171,49 @@ class CWLAnalysisWorkflow:
             apply_flatfield.dfPattern = self.df_pattern
             apply_flatfield.outDir = Path("apply_flatfield.outDir")
 
-        # Step: Kaggle Nuclei Segmentation
-        kaggle_segmentation = self.create_step(self._get_manifest_url("kaggle_nuclei_segmentation"))
-        kaggle_segmentation.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
-        kaggle_segmentation.filePattern = self.image_pattern
-        kaggle_segmentation.outDir = Path("kaggle_nuclei_segmentation.outDir")
 
-        # Step: FTL Label Plugin
-        ftl_plugin = self.create_step(self._get_manifest_url("ftl_plugin"))
-        ftl_plugin.inpDir = kaggle_segmentation.outDir
-        ftl_plugin.connectivity = "1"
-        ftl_plugin.binarizationThreshold = 0.5
-        ftl_plugin.outDir = Path("ftl_plugin.outDir")
+        # Montage
+        montage = self.create_step(self._get_manifest_url("montage_url"))
+        montage.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
+        montage.filePattern = self.image_pattern
+        montage.layout = self.layout
+        montage.outDir = Path("montage.outDir")
 
+        # # Image Assembler
+        image_assembler = self.create_step(
+            self._get_manifest_url("image_assembler_url")
+        )
+        image_assembler.imgPath = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
+        image_assembler.stitchPath =  montage.outDir
+        image_assembler.outDir = Path("image_assembler.outDir")
+        
 
-        # # ## Nyxus Plugin
-        nyxus_plugin = self.create_step(self._get_manifest_url("nyxus_plugin"))
-        # nyxus_plugin = Step(clt_path='/Users/abbasih2/Documents/Job/Axle_Work/image-workflows/cwl_adapters/NyxusPlugin.cwl')
-        nyxus_plugin.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
-        nyxus_plugin.segDir = ftl_plugin.outDir
-        nyxus_plugin.intPattern = self.image_pattern
-        nyxus_plugin.segPattern = self.seg_pattern
-        nyxus_plugin.features = self.features
-        nyxus_plugin.fileExtension = self.file_extension
-        nyxus_plugin.neighborDist = 5
-        nyxus_plugin.pixelPerMicron = 1.0
-        nyxus_plugin.outDir =  Path("nyxus_plugin.outDir")
+        # Precompute Slide
+        precompute_slide = self.create_step(
+            self._get_manifest_url("precompute_slide_url")
+        )
+        precompute_slide.pyramidType = self.pyramid_type
+        precompute_slide.imageType = self.image_type
+        precompute_slide.inpDir = image_assembler.outDir
+        precompute_slide.outDir = Path("precompute_slide.outDir")
 
-        # Run the workflow
+        logger.info("Initiating CWL Visualization Workflow!!!")
         steps = [
-            bbbc, rename, ome_converter,
+            bbbc,
+            rename,
+            ome_converter,
             estimate_flatfield if self.background_correction else None,
             apply_flatfield if self.background_correction else None,
-            kaggle_segmentation,
-            ftl_plugin,
-            nyxus_plugin
+            montage,
+            image_assembler,
+            precompute_slide
         ]
-
         workflow = Workflow(steps, f"{self.name}_workflow")
         # Compile and run using WIC python API
+
         workflow.compile()
         workflow.run()
         self._move_outputs()
         logger.info("Completed CWL nuclear segmentation workflow.")
+
         return

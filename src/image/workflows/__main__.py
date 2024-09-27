@@ -2,9 +2,11 @@
 import logging
 import typer
 from pathlib import Path
-from utils import LoadYaml
-# from cwl_analysis import CWLAnalysisWorkflow
-from cwl_nuclear_segmentation import CWLSegmentationWorkflow
+from typing import Optional
+from image.workflows.utils import LoadYaml
+from image.workflows.cwl_analysis import CWLAnalysisWorkflow
+from image.workflows.cwl_nuclear_segmentation import CWLSegmentationWorkflow
+from image.workflows.cwl_visualization import CWLVisualizationWorkflow
 
 
 
@@ -33,6 +35,12 @@ def main(
         "--workflow",
         "-w",
         help="Name of cwl workflow"
+    ),
+    out_dir: Optional[Path] = typer.Option(
+        None,
+        "--outDir",
+        "-o",
+        help="Name of cwl workflow"
     )
 ) -> None:
 
@@ -40,26 +48,37 @@ def main(
 
     logger.info(f"name = {name}")
     logger.info(f"workflow = {workflow}")
+    logger.info(f"outDir = {out_dir}")
 
-    config_path = Path(__file__).parent.parent.parent.parent.joinpath(f"configuration/{workflow}/{name}.yml")
-    
+    config_path = Path(__file__).resolve().parents[3].joinpath(f"configuration/{workflow}/{name}.yml")
+ 
 
 
     model = LoadYaml(workflow=workflow, config_path=config_path)
     params = model.parse_yaml()
+    if out_dir == None:
+        out_dir = Path(__file__).parent.parent.parent.parent
+    params["out_dir"] = out_dir
+
+
 
     # if workflow == "analysis":
     #     logger.info(f"Executing {workflow}!!!")
     #     model = CWLAnalysisWorkflow(**params)
     #     model.workflow()
 
-    if workflow == "segmentation":
+    # if workflow == "segmentation":
+    #     logger.info(f"Executing {workflow}!!!")
+    #     model = CWLSegmentationWorkflow(**params)
+    #     model.workflow()
+
+    if workflow == "visualization":
         logger.info(f"Executing {workflow}!!!")
-        model = CWLSegmentationWorkflow(**params)
+        model = CWLVisualizationWorkflow(**params)
         model.workflow()
 
 
-    # logger.info("Completed CWL workflow!!!")
+    logger.info("Completed CWL workflow!!!")
 
 
 if __name__ == "__main__":
