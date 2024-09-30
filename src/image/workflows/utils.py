@@ -7,14 +7,14 @@ import yaml
 
 GITHUB_TAG = "https://raw.githubusercontent.com"
 
-OUT_PATH = Path(__file__).resolve().parents[3]
+OUT_PATH = Path.cwd()
 
 
 
 MANIFEST_URLS = {
             "bbbc_download": f"{GITHUB_TAG}/saketprem/polus-plugins/bbbc_download/utils/bbbc-download-plugin/plugin.json",
             "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/filepattern_filerenaming/formats/file-renaming-tool/plugin.json",
-            "ome_converter": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/formats/ome-converter-tool/plugin.json",
+            "ome_converter": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/fix_endian_bug_omeconverter/formats/ome-converter-tool/plugin.json",
             "estimate_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/regression/basic-flatfield-estimation-tool/plugin.json",
             "apply_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/apply-flatfield-tool/plugin.json",
             "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/kaggle-nucleiseg/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",

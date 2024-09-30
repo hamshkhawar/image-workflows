@@ -20,6 +20,7 @@ class CWLVisualizationWorkflow:
     A CWL visualization pipeline to process imaging datasets.
     
     Attributes:
+        work_dir: Path to working directory.
         name: Name of the imaging dataset.
         file_pattern: Pattern for parsing raw filenames.
         out_file_pattern: Desired format for output filenames.
@@ -36,6 +37,7 @@ class CWLVisualizationWorkflow:
     """
     def __init__(
         self,
+        work_dir: Path,
         name: str,
         file_pattern: str,
         out_file_pattern: str,
@@ -65,8 +67,10 @@ class CWLVisualizationWorkflow:
         self.map_directory = map_directory
         self.background_correction = background_correction
         self.out_dir = out_dir
-        self.adapters_path = Path(__file__).resolve().parents[4].joinpath("cwl_adapters")
-        self.work_dir = Path.cwd()
+        self.work_dir = work_dir
+        self.adapters_path = self.work_dir.joinpath("cwl_adapters")
+        if not self.adapters_path.exists():
+            self.adapters_path.mkdir(exist_ok=True, parents=True)
 
     def _move_outputs(self) -> None:
         """Move output files and directories to the specified output directory."""
@@ -149,7 +153,7 @@ class CWLVisualizationWorkflow:
         # Step: OME Converter
         ome_converter = self.create_step(self._get_manifest_url("ome_converter"))
         ome_converter.filePattern = self._extract_file_extension(self.out_file_pattern)
-        ome_converter.fileExtension = ".ome.tif"
+        # ome_converter.fileExtension = ".ome.tif"
         ome_converter.inpDir = rename.outDir
         ome_converter.outDir = Path("ome_converter.outDir")
 
