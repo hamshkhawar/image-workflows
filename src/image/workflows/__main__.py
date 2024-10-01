@@ -50,32 +50,33 @@ def main(
     logger.info(f"workflow = {workflow}")
     logger.info(f"outDir = {out_dir}")
 
-    config_path = Path(__file__).resolve().parents[3].joinpath(f"configuration/{workflow}/{name}.yml")
+    config_path = Path.cwd().joinpath(f"configuration/{workflow}/{name}.yml")
+    work_dir = Path.cwd()
  
 
 
     model = LoadYaml(workflow=workflow, config_path=config_path)
     params = model.parse_yaml()
     if out_dir == None:
-        out_dir = Path(__file__).parent.parent.parent.parent
+        out_dir = Path.cwd()
     params["out_dir"] = out_dir
+    params["work_dir"] = work_dir
 
 
-
-    # if workflow == "analysis":
-    #     logger.info(f"Executing {workflow}!!!")
-    #     model = CWLAnalysisWorkflow(**params)
-    #     model.workflow()
-
-    # if workflow == "segmentation":
-    #     logger.info(f"Executing {workflow}!!!")
-    #     model = CWLSegmentationWorkflow(**params)
-    #     model.workflow()
-
-    if workflow == "visualization":
+    if workflow == "analysis":
         logger.info(f"Executing {workflow}!!!")
-        model = CWLVisualizationWorkflow(**params)
+        model = CWLAnalysisWorkflow(**params)
         model.workflow()
+
+    if workflow == "segmentation":
+        logger.info(f"Executing {workflow}!!!")
+        model = CWLSegmentationWorkflow(**params)
+        model.workflow()
+
+    # if workflow == "visualization":
+    #     logger.info(f"Executing {workflow}!!!")
+    #     model = CWLVisualizationWorkflow(**params)
+    #     model.workflow()
 
 
     logger.info("Completed CWL workflow!!!")

@@ -149,7 +149,7 @@ class CWLAnalysisWorkflow:
         # Step: OME Converter
         ome_converter = self.create_step(self._get_manifest_url("ome_converter"))
         ome_converter.filePattern = self._extract_file_extension(self.out_file_pattern)
-        # ome_converter.fileExtension = ".ome.tif"
+        ome_converter.fileExtension = ".ome.tif"
         ome_converter.inpDir = rename.outDir
         ome_converter.outDir = Path("ome_converter.outDir")
 

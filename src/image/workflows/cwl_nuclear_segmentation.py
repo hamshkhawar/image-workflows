@@ -139,6 +139,7 @@ class CWLSegmentationWorkflow:
         rename.outFilePattern = self.out_file_pattern
         rename.mapDirectory = self.map_directory
         rename.inpDir = bbbc.outDir
+        # rename.inpDir = Path("/Users/abbasih2/Desktop/inp")
         rename.outDir = Path("rename.outDir")
 
         # Step: OME Converter
@@ -180,7 +181,8 @@ class CWLSegmentationWorkflow:
 
         # Run the workflow
         steps = [
-            bbbc, rename, ome_converter,
+            bbbc, 
+            rename, ome_converter,
             estimate_flatfield if self.background_correction else None,
             apply_flatfield if self.background_correction else None,
             kaggle_segmentation,
