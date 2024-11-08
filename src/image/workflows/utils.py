@@ -7,19 +7,19 @@ import yaml
 
 GITHUB_TAG = "https://raw.githubusercontent.com"
 
-OUT_PATH = Path.cwd()
 
+OUT_PATH = Path.cwd()
 
 
 MANIFEST_URLS = {
             "bbbc_download": f"{GITHUB_TAG}/saketprem/polus-plugins/bbbc_download/utils/bbbc-download-plugin/plugin.json",
-            "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/filepattern_filerenaming/formats/file-renaming-tool/plugin.json",
-            "ome_converter": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/formats/ome-converter-tool/plugin.json",
-            "estimate_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/regression/basic-flatfield-estimation-tool/plugin.json",
+            "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/fix_whitespaces_filerenaming/formats/file-renaming-tool/plugin.json",
+            "ome_converter": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/fix_worker_omeconverter/formats/ome-converter-tool/plugin.json",
+            "estimate_flatfield": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/update_basicpy_dependency/regression/basic-flatfield-estimation-tool/plugin.json",
             "apply_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/apply-flatfield-tool/plugin.json",
-            "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/kaggle_update_dependencies/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",
+            "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",
             "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json",
-            "nyxus_plugin": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/nyxus_fix_entrypoint/features/nyxus-tool/plugin.json",
+            "nyxus_plugin": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/features/nyxus-tool/plugin.json",
             "montage_url" :f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/montage-tool/plugin.json",
             "image_assembler_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/image-assembler-tool/plugin.json",
             "precompute_slide_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/visualization/precompute-slide-tool/plugin.json"
@@ -28,20 +28,23 @@ MANIFEST_URLS = {
 
 # Define keys as frozensets for immutability
 ANALYSIS_KEYS = frozenset([
-    "name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", 
+    "name", "inp_dir", "file_pattern", "out_file_pattern",  "seg_pattern", 
     "ff_pattern", "df_pattern", "group_by", "map_directory", "features", 
-    "file_extension", "background_correction"
+    "file_extension", "background_correction", "container_engine"
 ])
+
 
 SEG_KEYS = frozenset([
-    "name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", 
-    "ff_pattern", "df_pattern", "group_by", "map_directory", "background_correction"
+    "name", "inp_dir", "file_pattern", "out_file_pattern",  "seg_pattern", 
+    "ff_pattern", "df_pattern", "group_by", "map_directory",
+    "background_correction","container_engine"
 ])
 
+
 VIZ_KEYS = frozenset([
-    "name", "file_pattern", "out_file_pattern", "image_pattern", "seg_pattern", 
+    "name", "inp_dir", "file_pattern", "out_file_pattern", "seg_pattern", 
     "layout", "pyramid_type", "image_type", "ff_pattern", "df_pattern", "group_by", 
-    "map_directory", "background_correction"
+    "map_directory", "background_correction", "container_engine"
 ])
 
 # Mapping workflows to their respective keys
@@ -98,3 +101,5 @@ class LoadYaml(pydantic.BaseModel):
         expected_keys = WORKFLOW_KEYS[self.workflow]
         if data.get("background_correction", False) and set(data.keys()) != expected_keys:
             raise ValueError(f"Invalid parameters for {self.workflow} workflow. Expected keys: {expected_keys}")
+        
+

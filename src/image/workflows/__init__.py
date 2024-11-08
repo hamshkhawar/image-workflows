@@ -1,2 +1,2 @@
-from .cwl_analysis import CWLAnalysisWorkflow
+from .cwl_analysis_new import CWLAnalysisWorkflow
 from .cwl_nuclear_segmentation import CWLSegmentationWorkflow

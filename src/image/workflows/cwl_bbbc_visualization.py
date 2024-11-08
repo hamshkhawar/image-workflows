@@ -1,3 +1,4 @@
+import logging
 import re
 import shutil
 from pathlib import Path
@@ -7,26 +8,26 @@ import yaml
 from sophios.api.pythonapi import Step, Workflow
 import polus.tools.plugins as pp
 from image.workflows.utils import OUT_PATH,MANIFEST_URLS
-import logging
+
 
 # Initialize the logger
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
 
-class CWLSegmentationWorkflow:
+class CWLVisualizationWorkflow:
     """
-    A CWL Nuclear Segmentation pipeline to process imaging datasets.
+    A CWL visualization pipeline to process imaging datasets.
     
     Attributes:
         work_dir: Path to working directory.
         name: Name of the imaging dataset.
-        inp_dir: Inpput directory.
         file_pattern: Pattern for parsing raw filenames.
         out_file_pattern: Desired format for output filenames.
         image_pattern: Pattern for parsing intensity image filenames.
         seg_pattern: Pattern to parse segmentation image filenames.
-        container_engine: Choose container engine, either 'singularity' or 'docker'.
+        layout : A list indicating the grid layout.
+        pyramid_type : A list indicating the grid layout.
         ff_pattern: Filename pattern for selecting flatfield components.
         df_pattern: Filename pattern for selecting darkfield components.
         group_by: Variables used for grouping the file pattern.
@@ -38,11 +39,13 @@ class CWLSegmentationWorkflow:
         self,
         work_dir: Path,
         name: str,
-        inp_dir:Path,
         file_pattern: str,
         out_file_pattern: str,
+        image_pattern: str,
         seg_pattern: str,
-        container_engine:str,
+        layout: str,
+        pyramid_type: str,
+        image_type: str,
         ff_pattern: typing.Optional[str] = '',
         df_pattern: typing.Optional[str] = '',
         group_by: typing.Optional[str] = '',
@@ -51,11 +54,13 @@ class CWLSegmentationWorkflow:
         out_dir: typing.Optional[Path] = OUT_PATH
     ):
         self.name = name
-        self.inp_dir=inp_dir
         self.file_pattern = file_pattern
         self.out_file_pattern = out_file_pattern
+        self.image_pattern = image_pattern
         self.seg_pattern = seg_pattern
-        self.container_engine= container_engine
+        self.layout = layout
+        self.pyramid_type = pyramid_type
+        self.image_type = image_type
         self.ff_pattern = ff_pattern
         self.df_pattern = df_pattern
         self.group_by = group_by
@@ -102,137 +107,117 @@ class CWLSegmentationWorkflow:
         """Create a step for the workflow based on the plugin manifest."""
         manifest = dict(pp.submit_plugin(plugin_url))
         plugin_version = str(manifest['version'])
-        base_command = manifest['baseCommand']
-        out_path = self.adapters_path.joinpath(f"{self._to_camel_case(manifest['name'])}.cwl")
         cwl_tool = pp.get_plugin(self._to_camel_case(manifest['name']), plugin_version).save_cwl(
-            out_path)
-        
-        if self.container_engine == "singularity":
-            self._modify_cwl(base_command, out_path.name)
-
+            self.adapters_path.joinpath(f"{self._to_camel_case(manifest['name'])}.cwl")
+        )
+        self._modify_cwl()
         return Step(cwl_tool)
 
     def _get_manifest_url(self, plugin_name: str) -> str:
         """Retrieve the URL for the plugin manifest from GitHub."""
+
         return MANIFEST_URLS.get(plugin_name, "")
 
-    def _modify_cwl(self, base_command:list[str], name:str) -> None:
+    def _modify_cwl(self) -> None:
         """Modify CWL files to include environmental variables and permissions."""
-
-        # Assuming self.adapters_path is a Path object pointing to your directory
-        for cwl_file in self.adapters_path.rglob(name):
+        for cwl_file in self.adapters_path.rglob("*.cwl"):
             if "cwl" in cwl_file.name:
                 try:
                     with cwl_file.open("r") as file:
                         config = yaml.safe_load(file)
                         config.setdefault("requirements", {})
                         config["requirements"]["NetworkAccess"] = {"networkAccess": True}
-
-                    # Write the modified config back to the file
+                        config["requirements"]["EnvVarRequirement"] = {"envDef": {"HOME": "/home/polusai"}}
                     with cwl_file.open("w") as out_file:
-                        # Manually format baseCommand to a single line
-                        
-                        # Use yaml.dump for the rest of the config
-                        yaml.dump(config, out_file, default_flow_style=False, sort_keys=False)
-                        out_file.write(f"baseCommand: {base_command}\n")
-
+                        yaml.dump(config, out_file)
                 except FileNotFoundError:
                     logger.error(f"Error processing file: {cwl_file}")
 
-    def _image_pattern(self):
-        """Modify out_file_pattern to get ome pattern."""
-
-        # Split the filename at the period
-        name_part, ext_part =  self.out_file_pattern.rsplit('.', 1) 
-        # Add `.ome` before the `.tif` extension
-        file_pattern = f"{name_part}.ome.{ext_part}"
-        return file_pattern
-
     def workflow(self) -> None:
-        """Execute the CWL nuclear segmentation pipeline."""
-        logger.info("Starting CWL nuclear segmentation workflow.")
-
-        # # Step: BBBC Download
-        # bbbc = self.create_step(self._get_manifest_url("bbbc_download"))
-        # bbbc.name = self.name
-        # bbbc.outDir = Path("bbbc.outDir")
+        """
+        A CWL visualization pipeline.
+        """
+        # Step: BBBC Download
+        bbbc = self.create_step(self._get_manifest_url("bbbc_download"))
+        bbbc.name = self.name
+        bbbc.outDir = Path("bbbc.outDir")
 
         # Step: File Renaming
         rename = self.create_step(self._get_manifest_url("file_renaming"))
         rename.filePattern = self.file_pattern
         rename.outFilePattern = self.out_file_pattern
         rename.mapDirectory = self.map_directory
-        rename.inpDir = self.inp_dir
+        rename.inpDir = bbbc.outDir
         rename.outDir = Path("rename.outDir")
 
-    
         # Step: OME Converter
         ome_converter = self.create_step(self._get_manifest_url("ome_converter"))
-        ome_converter.filePattern = self.out_file_pattern
+        ome_converter.filePattern = self._extract_file_extension(self.out_file_pattern)
+        ome_converter.fileExtension = ".ome.tif"
         ome_converter.inpDir = rename.outDir
         ome_converter.outDir = Path("ome_converter.outDir")
 
-        # # Optional: Background correction
-       
-        file_pattern = self._image_pattern()
-
+        # Optional: Background correction
         if self.background_correction:
             estimate_flatfield = self.create_step(self._get_manifest_url("estimate_flatfield"))
             estimate_flatfield.inpDir = ome_converter.outDir
-            estimate_flatfield.filePattern = file_pattern
+            estimate_flatfield.filePattern = self.image_pattern
             estimate_flatfield.groupBy = self.group_by
             estimate_flatfield.getDarkfield = True
             estimate_flatfield.outDir = Path("estimate_flatfield.outDir")
 
+            # Apply Flatfield
             apply_flatfield = self.create_step(self._get_manifest_url("apply_flatfield"))
             apply_flatfield.imgDir = ome_converter.outDir
-            apply_flatfield.imgPattern = file_pattern
+            apply_flatfield.imgPattern = self.image_pattern
             apply_flatfield.ffDir = estimate_flatfield.outDir
             apply_flatfield.ffPattern = self.ff_pattern
             apply_flatfield.dfPattern = self.df_pattern
             apply_flatfield.outDir = Path("apply_flatfield.outDir")
 
-        # # Step: Kaggle Nuclei Segmentation
-        kaggle_segmentation = self.create_step(self._get_manifest_url("kaggle_nuclei_segmentation"))
-        kaggle_segmentation.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
-        kaggle_segmentation.filePattern =  self.seg_pattern
-        kaggle_segmentation.outDir = Path("kaggle_nuclei_segmentation.outDir")
 
-        # Step: FTL Label Plugin
-        ftl_plugin = self.create_step(self._get_manifest_url("ftl_plugin"))
-        ftl_plugin.inpDir = kaggle_segmentation.outDir
-        ftl_plugin.connectivity = "1"
-        ftl_plugin.binarizationThreshold = 0.5
-        ftl_plugin.outDir = Path("ftl_plugin.outDir")
+        # Montage
+        montage = self.create_step(self._get_manifest_url("montage_url"))
+        montage.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
+        montage.filePattern = self.image_pattern
+        montage.layout = self.layout
+        montage.outDir = Path("montage.outDir")
 
-        #Run the workflow
+        # # Image Assembler
+        image_assembler = self.create_step(
+            self._get_manifest_url("image_assembler_url")
+        )
+        image_assembler.imgPath = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
+        image_assembler.stitchPath =  montage.outDir
+        image_assembler.outDir = Path("image_assembler.outDir")
+        
 
+        # Precompute Slide
+        precompute_slide = self.create_step(
+            self._get_manifest_url("precompute_slide_url")
+        )
+        precompute_slide.pyramidType = self.pyramid_type
+        precompute_slide.imageType = self.image_type
+        precompute_slide.inpDir = image_assembler.outDir
+        precompute_slide.outDir = Path("precompute_slide.outDir")
 
+        logger.info("Initiating CWL Visualization Workflow!!!")
         steps = [
-            rename, ome_converter,
+            bbbc,
+            rename,
+            ome_converter,
             estimate_flatfield if self.background_correction else None,
             apply_flatfield if self.background_correction else None,
-            kaggle_segmentation,
-            ftl_plugin
-
+            montage,
+            image_assembler,
+            precompute_slide # At the moment precompute slide is not working. PR will be open for the fix
         ]
-        workflowname = f"{self.name}_workflow"
+        workflow = Workflow(steps, f"{self.name}_workflow")
+        # Compile and run using WIC python API
 
-        if self.container_engine == "singularity":
-            args = ['--container_engine',self.container_engine]
-            workflow = Workflow(steps,  workflowname, args)
-        else:
-            workflow = Workflow(steps,  workflowname)
-
-
-        # # Compile and run using WIC python API
         workflow.compile()
         workflow.run()
+        self._move_outputs()
+        logger.info("Completed CWL visualization workflow.")
 
-        workflow.write_ast_to_disk(self.work_dir)
-
-        # self._move_outputs()
-        logger.info("Completed CWL nuclear segmentation workflow.")
         return
-
-

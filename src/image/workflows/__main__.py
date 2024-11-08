@@ -56,7 +56,9 @@ def main(
 
 
     model = LoadYaml(workflow=workflow, config_path=config_path)
+
     params = model.parse_yaml()
+
     if out_dir == None:
         out_dir = Path.cwd()
     params["out_dir"] = out_dir
