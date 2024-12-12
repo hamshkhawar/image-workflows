@@ -1,46 +1,46 @@
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
-  features:
+  falsePositiverate:
     inputBinding:
-      prefix: --features
+      prefix: --falsePositiverate
+    type: double?
+  filePattern:
+    inputBinding:
+      prefix: --filePattern
     type: string?
-  fileExtension:
-    inputBinding:
-      prefix: --fileExtension
-    type: string
   inpDir:
     inputBinding:
       prefix: --inpDir
     type: Directory
-  intPattern:
+  n:
     inputBinding:
-      prefix: --intPattern
+      prefix: --n
+    type: double?
+  negControl:
+    inputBinding:
+      prefix: --negControl
     type: string
-  neighborDist:
+  numBins:
     inputBinding:
-      prefix: --neighborDist
+      prefix: --numBins
     type: double?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
-  pixelPerMicron:
+  posControl:
     inputBinding:
-      prefix: --pixelPerMicron
-    type: double?
-  segDir:
+      prefix: --posControl
+    type: string?
+  thresholdType:
     inputBinding:
-      prefix: --segDir
-    type: Directory
-  segPattern:
-    inputBinding:
-      prefix: --segPattern
+      prefix: --thresholdType
     type: string
-  singleRoi:
+  varName:
     inputBinding:
-      prefix: --singleRoi
-    type: boolean?
+      prefix: --varName
+    type: string
 outputs:
   outDir:
     outputBinding:
@@ -48,7 +48,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/nyxus-tool:0.1.8-dev1
+    dockerPull: polusai/tabular-thresholding-tool:0.1.8-dev2
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
@@ -58,4 +58,4 @@ requirements:
     ramMin: 10240
   NetworkAccess:
     networkAccess: true
-baseCommand: ['python3', '-m', 'polus.images.features.nyxus_tool']
+baseCommand: ['python3', '-m', 'polus.tabular.transforms.tabular_thresholding']

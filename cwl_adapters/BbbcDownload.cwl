@@ -22,6 +22,8 @@ requirements:
     - entry: $(inputs.outDir)
       writable: true
   InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 10240
   NetworkAccess:
     networkAccess: true
 baseCommand: ['python3', '-m', 'polus.plugins.utils.bbbc_download']

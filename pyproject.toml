@@ -15,7 +15,7 @@ pydantic = "^2.6.1"
 #cwlref-runner = "1.0"
 #cwltool = "^3.1.20240909164951"
 #graphviz = "^0.20.3"
-#polus-tools = { git = "https://github.com/PolusAI/tools.git" }
+polus-tools = { git = "https://github.com/PolusAI/tools.git" }
 
 
 

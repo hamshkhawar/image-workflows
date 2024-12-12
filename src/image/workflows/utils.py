@@ -19,7 +19,10 @@ MANIFEST_URLS = {
             "apply_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/apply-flatfield-tool/plugin.json",
             "kaggle_nuclei_segmentation": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/segmentation/kaggle-nuclei-segmentation-tool/plugin.json",
             "ftl_plugin": f"{GITHUB_TAG}/nishaq503/image-tools/fix/ftl-label/transforms/images/polus-ftl-label-plugin/plugin.json",
-            "nyxus_plugin": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/features/nyxus-tool/plugin.json",
+            "nyxus_plugin": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/nyxus_bug/features/nyxus-tool/plugin.json",
+            "tabular_feat_concat": f"{GITHUB_TAG}/hamshkhawar/tabular-tools/refs/heads/tabular-concat/transforms/tabular-feature-concat-tool/plugin.json",
+            "tabular_threshold":f"{GITHUB_TAG}/hamshkhawar/tabular-tools/refs/heads/tabular-thres/transforms/tabular-thresholding-tool/plugin.json",
+            "tabular_statistics":f"{GITHUB_TAG}/hamshkhawar/tabular-tools/refs/heads/tabular_statistic/features/tabular-statistics-tool/plugin.json",
             "montage_url" :f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/montage-tool/plugin.json",
             "image_assembler_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/image-assembler-tool/plugin.json",
             "precompute_slide_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/visualization/precompute-slide-tool/plugin.json"
@@ -27,10 +30,27 @@ MANIFEST_URLS = {
 
 
 # Define keys as frozensets for immutability
+OPTIONAL_KEYS = frozenset(["map_directory", 
+                           "file_extension",
+                           "background_correction", 
+                            "pixel_per_micron",
+                            "neighbor_dist",
+                            "neg_control",
+                            "pos_control",
+                            "thresh_varname",
+                            "thresh_type",
+                            "false_positive_rate",
+                            "num_bins",
+                            "n",
+                            "statistics"
+                            ])
+
 ANALYSIS_KEYS = frozenset([
-    "name", "inp_dir", "file_pattern", "out_file_pattern",  "seg_pattern", 
+    "name", "inp_dir", "meta_dir", "file_pattern", "out_file_pattern",  "seg_pattern", 
     "ff_pattern", "df_pattern", "group_by", "map_directory", "features", 
-    "file_extension", "background_correction", "container_engine"
+    "file_extension", "background_correction", "container_engine", "pixel_per_micron",
+    "neighbor_dist","neg_control","pos_control","thresh_varname","thresh_type","false_positive_rate","num_bins", "n", 
+    "statistics"
 ])
 
 
@@ -98,8 +118,20 @@ class LoadYaml(pydantic.BaseModel):
 
     def _validate_workflow_keys(self, data: Dict[str, Union[str, bool]]) -> None:
         """Validate that the keys in the YAML match the expected keys for the selected workflow."""
-        expected_keys = WORKFLOW_KEYS[self.workflow]
-        if data.get("background_correction", False) and set(data.keys()) != expected_keys:
-            raise ValueError(f"Invalid parameters for {self.workflow} workflow. Expected keys: {expected_keys}")
+        # expected_keys = WORKFLOW_KEYS[self.workflow]
+        # if data.get("background_correction", False) and set(data.keys()) != expected_keys:
+        #     raise ValueError(f"Invalid parameters for {self.workflow} workflow. Expected keys: {expected_keys}")
+
+         # Check for missing required keys
+        required_keys = ANALYSIS_KEYS - OPTIONAL_KEYS
+        missing_keys = required_keys - data.keys()
+        if missing_keys:
+            raise ValueError(f"Missing required parameters for {self.workflow} workflow. Missing keys: {missing_keys}")
+
+        # Warn for unrecognized keys (optional, remove if not needed)
+        unrecognized_keys = data.keys() - ANALYSIS_KEYS
+        if unrecognized_keys:
+            print(f"Warning: Unrecognized keys found in the YAML file: {unrecognized_keys}")
+
         
 

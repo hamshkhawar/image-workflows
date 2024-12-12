@@ -1,45 +1,41 @@
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
+  channelName:
+    inputBinding:
+      prefix: --channelName
+    type: string
   features:
     inputBinding:
       prefix: --features
     type: string?
-  fileExtension:
+  filePattern:
     inputBinding:
-      prefix: --fileExtension
+      prefix: --filePattern
+    type: string
+  groupBy:
+    inputBinding:
+      prefix: --groupBy
     type: string
   inpDir:
     inputBinding:
       prefix: --inpDir
     type: Directory
-  intPattern:
+  metaDir:
     inputBinding:
-      prefix: --intPattern
-    type: string
-  neighborDist:
-    inputBinding:
-      prefix: --neighborDist
-    type: double?
+      prefix: --metaDir
+    type: Directory?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
-  pixelPerMicron:
+  plateName:
     inputBinding:
-      prefix: --pixelPerMicron
-    type: double?
-  segDir:
+      prefix: --plateName
+    type: string?
+  preview:
     inputBinding:
-      prefix: --segDir
-    type: Directory
-  segPattern:
-    inputBinding:
-      prefix: --segPattern
-    type: string
-  singleRoi:
-    inputBinding:
-      prefix: --singleRoi
+      prefix: --preview
     type: boolean?
 outputs:
   outDir:
@@ -48,7 +44,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/nyxus-tool:0.1.8-dev1
+    dockerPull: polusai/tabular-feature-concat-tool:0.1.0-dev2
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
@@ -58,4 +54,4 @@ requirements:
     ramMin: 10240
   NetworkAccess:
     networkAccess: true
-baseCommand: ['python3', '-m', 'polus.images.features.nyxus_tool']
+baseCommand: ['python3', '-m', 'polus.tabular.transforms.feature_concat']

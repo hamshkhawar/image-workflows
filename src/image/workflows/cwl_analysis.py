@@ -13,10 +13,9 @@ import logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 
-
+   
 class CWLAnalysisWorkflow:
-    """
-    
+    """ 
     A CWL feature extraction or Analysis pipeline.
     
     Attributes:
@@ -34,6 +33,16 @@ class CWLAnalysisWorkflow:
         features:Features from Nyxus (https://github.com/PolusAI/nyxus/) that need extraction
         file_extension: Output file format
         background_correction: Flag to enable background correction.
+        pixel_per_micron: Number of pixels per distance micron.
+        neighbor_dist:  Distance between neighboring cells.
+        neg_control: Negative control feature for thresholding.
+        pos_control: Positive control feature for thresholding.
+        thresh_varname: Variable name for thresholding.
+        thresh_type: Thresholding method.
+        false_positive_rate: False positive rate for thresholding.
+        num_bins: Number of bins for thresholding.
+        n: Number of standard deviations used for thresholding.
+        statistics: Statistical method for analysis.
         out_dir: Directory for saving outputs.
     """
     def __init__(
@@ -41,6 +50,7 @@ class CWLAnalysisWorkflow:
         work_dir: Path,
         name: str,
         inp_dir:Path,
+        meta_dir:Path,
         file_pattern: str,
         out_file_pattern: str,
         seg_pattern: str,
@@ -48,14 +58,26 @@ class CWLAnalysisWorkflow:
         ff_pattern: typing.Optional[str] = '',
         df_pattern: typing.Optional[str] = '',
         group_by: typing.Optional[str] = '',
-        map_directory: typing.Optional[bool] = False,
+        map_directory: typing.Optional[bool] = '',
         features: typing.Optional[str]="ALL",
         file_extension: typing.Optional[str]="arrowipc",
         background_correction: typing.Optional[bool] = False,
+        pixel_per_micron: typing.Optional[float] = 1.0,
+        neighbor_dist: typing.Optional[int] = 5,
+        neg_control: typing.Optional[str] = "neg_controls",
+        pos_control: typing.Optional[str] = "pos_controls",
+        thresh_varname:typing.Optional[str] = "C1_MEAN",
+        thresh_type:typing.Optional[str] = "all",
+        false_positive_rate:typing.Optional[float] = 0.01,
+        num_bins:typing.Optional[int] = 512,
+        n:typing.Optional[int] = 3,
+        statistics:typing.Optional[str]="mean",
         out_dir: typing.Optional[Path] = OUT_PATH
     ):
+        
         self.name = name
         self.inp_dir=inp_dir
+        self.meta_dir=meta_dir
         self.file_pattern = file_pattern
         self.out_file_pattern = out_file_pattern
         self.seg_pattern = seg_pattern
@@ -67,10 +89,23 @@ class CWLAnalysisWorkflow:
         self.features = features
         self.file_extension=file_extension
         self.background_correction = background_correction
+        self.pixel_per_micron = pixel_per_micron
+        self.neighbor_dist = neighbor_dist
+        self.neg_control = neg_control
+        self.pos_control = pos_control
+        self.thresh_varname = thresh_varname
+        self.thresh_type = thresh_type
+        self.false_positive_rate = false_positive_rate
+        self.num_bins = num_bins
+        self.n = n
+        self.statistics = statistics
         self.out_dir = out_dir
         self.work_dir = work_dir
         self.adapters_path = self.work_dir.joinpath("cwl_adapters")
+        self.wic_path = self.work_dir.joinpath("wic_workflows")
         if not self.adapters_path.exists():
+            self.adapters_path.mkdir(exist_ok=True, parents=True)
+        if not self.wic_path.exists():
             self.adapters_path.mkdir(exist_ok=True, parents=True)
 
     def _move_outputs(self) -> None:
@@ -125,20 +160,17 @@ class CWLAnalysisWorkflow:
     def _modify_cwl(self, base_command:list[str], name:str) -> None:
         """Modify CWL files to include environmental variables and permissions."""
 
-        # Assuming self.adapters_path is a Path object pointing to your directory
         for cwl_file in self.adapters_path.rglob(name):
             if "cwl" in cwl_file.name:
                 try:
                     with cwl_file.open("r") as file:
                         config = yaml.safe_load(file)
                         config.setdefault("requirements", {})
+                        config["requirements"]["ResourceRequirement"] = {"ramMin": 10240}
                         config["requirements"]["NetworkAccess"] = {"networkAccess": True}
-
+                        
                     # Write the modified config back to the file
                     with cwl_file.open("w") as out_file:
-                        # Manually format baseCommand to a single line
-                        
-                        # Use yaml.dump for the rest of the config
                         yaml.dump(config, out_file, default_flow_style=False, sort_keys=False)
                         out_file.write(f"baseCommand: {base_command}\n")
 
@@ -153,15 +185,26 @@ class CWLAnalysisWorkflow:
         # Add `.ome` before the `.tif` extension
         file_pattern = f"{name_part}.ome.{ext_part}"
         return file_pattern
+    
+    def _param_feature_concat(self):
+        """Parameters for tabular feature concat tool."""
+
+        if  self.file_extension =="arrowipc":
+            file_extension=".arrow"
+        elif self.file_extension =="pandas":
+            file_extension=".csv"
+
+        tfeat_file_pattern = self.out_file_pattern.split(".")[0] + file_extension
+        # channel_name = self.group_by
+        variables = re.findall(r'\{([^:}]+)', self.out_file_pattern)
+        group_by = ",".join([var for var in variables if var != 'c'])
+        plate_name=Path(self.inp_dir).name.replace(" ", "")
+
+        return tfeat_file_pattern, group_by, plate_name
 
     def workflow(self) -> None:
         """Execute the CWL analysis pipeline."""
         logger.info("Starting CWL analysis workflow.")
-
-        # # Step: BBBC Download
-        # bbbc = self.create_step(self._get_manifest_url("bbbc_download"))
-        # bbbc.name = self.name
-        # bbbc.outDir = Path("bbbc.outDir")
 
         ## Step: File Renaming
         rename = self.create_step(self._get_manifest_url("file_renaming"))
@@ -211,8 +254,6 @@ class CWLAnalysisWorkflow:
         ftl_plugin.binarizationThreshold = 0.5
         ftl_plugin.outDir = Path("ftl_plugin.outDir")
 
-
-
         ## Nyxus Plugin
         nyxus_plugin = self.create_step(self._get_manifest_url("nyxus_plugin"))
         nyxus_plugin.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
@@ -221,16 +262,44 @@ class CWLAnalysisWorkflow:
         nyxus_plugin.segPattern = self.seg_pattern
         nyxus_plugin.features = self.features
         nyxus_plugin.fileExtension = self.file_extension
-        nyxus_plugin.neighborDist = 5
-        nyxus_plugin.pixelPerMicron = 1.0
+        nyxus_plugin.neighborDist = self.neighbor_dist
+        nyxus_plugin.pixelPerMicron = self.pixel_per_micron
         nyxus_plugin.outDir =  Path("nyxus_plugin.outDir")
 
+        ### Feature Concat
+        tfeat_file_pattern, group_by, plate_name=self._param_feature_concat()
+        tabular_feat = self.create_step(self._get_manifest_url("tabular_feat_concat"))
+        tabular_feat.inpDir = nyxus_plugin.outDir
+        tabular_feat.filePattern = tfeat_file_pattern
+        tabular_feat.groupBy = group_by
+        tabular_feat.channelName = self.group_by
+        tabular_feat.metaDir = self.meta_dir
+        tabular_feat.plateName = plate_name
+        tabular_feat.outDir =  Path("tabular_feat.outDir")
 
 
+        ### Tabular Thresholding
+        tabular_thresh = self.create_step(self._get_manifest_url("tabular_threshold"))
+        tabular_thresh.inpDir = tabular_feat.outDir
+        tabular_thresh.filePattern = ".*.arrow"
+        tabular_thresh.negControl = self.neg_control
+        tabular_thresh.posControl = self.pos_control
+        tabular_thresh.varName =  self.thresh_varname
+        tabular_thresh.thresholdType = self.thresh_type 
+        tabular_thresh.falsePositiverate = self.false_positive_rate
+        tabular_thresh.numBins = self.num_bins
+        tabular_thresh.n =  self.n
+        tabular_thresh.outDir =  Path("tabular_thresh.outDir")
+
+        ### Tabular Statistic
+        tabular_stat = self.create_step(self._get_manifest_url("tabular_statistics"))
+        tabular_stat.inpDir = tabular_thresh.outDir
+        tabular_stat.outDir = Path("tabular_stat.outDir")
+        tabular_stat.filePattern = self.out_file_pattern.split(".")[0] + ".ome.tif"
+        tabular_stat.groupBy = group_by
+        tabular_stat.statistics = self.statistics
 
         #Run the workflow
-
-
         steps = [
             rename, 
             ome_converter,
@@ -238,7 +307,10 @@ class CWLAnalysisWorkflow:
             apply_flatfield if self.background_correction else None,
             kaggle_segmentation,
             ftl_plugin,
-            nyxus_plugin
+            nyxus_plugin,
+            tabular_feat,
+            tabular_thresh,
+            tabular_stat
 
         ]
         workflowname = f"{self.name}_analysis_workflow"
@@ -252,9 +324,10 @@ class CWLAnalysisWorkflow:
 
         # # Compile and run using WIC python API
         workflow.compile()
-        workflow.run()
+        # # Run using WIC python API
+        # workflow.run()
 
-        workflow.write_ast_to_disk(self.work_dir)
+        workflow.write_ast_to_disk(self.wic_path)
 
         # self._move_outputs()
         logger.info("Completed CWL analysis workflow.")

@@ -30,6 +30,8 @@ requirements:
     - entry: $(inputs.outDir)
       writable: true
   InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 10240
   NetworkAccess:
     networkAccess: true
 baseCommand: ['python3', '/ftl-rust/src/main.py']

@@ -4,22 +4,22 @@ inputs:
   filePattern:
     inputBinding:
       prefix: --filePattern
-    type: string
+    type: string?
+  groupBy:
+    inputBinding:
+      prefix: --groupBy
+    type: string?
   inpDir:
     inputBinding:
       prefix: --inpDir
     type: Directory
-  mapDirectory:
-    inputBinding:
-      prefix: --mapDirectory
-    type: string?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
-  outFilePattern:
+  statistics:
     inputBinding:
-      prefix: --outFilePattern
+      prefix: --statistics
     type: string
 outputs:
   outDir:
@@ -28,7 +28,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/file-renaming-tool:0.2.4-dev2
+    dockerPull: polusai/tabular-statistics-tool:0.1.0-dev0
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
@@ -38,4 +38,4 @@ requirements:
     ramMin: 10240
   NetworkAccess:
     networkAccess: true
-baseCommand: ['python3', '-m', 'polus.images.formats.file_renaming']
+baseCommand: ['python3', '-m', 'polus.tabular.features.tabular_statistics']
