@@ -1,16 +1,14 @@
 ---
 name: SOD1
-inp_dir: /projects/SOD1/processed_data/test/CD_SOD1_2_E1023884 __1
 meta_dir:  /projects/SOD1/processed_data/meta/
-file_pattern: '{row:c+}.*-.*{col:dd}.*wv\s*{c:c+}.*.tif'
-out_file_pattern: '{row:c}_{col:dd}_c{c:d+}.tif'
-seg_pattern: '{row:c}_{col:dd}_c0.ome.tif'
-ff_pattern: "A_\\(01-10\\)_c{c:d}_flatfield.ome.tif"
-df_pattern: "A_\\(01-10\\)_c{c:d}_darkfield.ome.tif"
+file_pattern: '{row:c+}.*-.*{col:dd}.*wv.{c:c+}.*.tif'
+out_file_pattern: '{row:c+}_{col:dd}_c{c:d+}.tif'
+seg_pattern: '{row:c+}_{col:dd}_c0.ome.tif'
+ff_pattern: '\(A-Z\)_\(01-48\)_c{c:d}_flatfield.ome.tif'
+df_pattern: '\(A-Z\)_\(01-48\)_c{c:d}_darkfield.ome.tif'
 group_by: c
 features: MEAN
 background_correction: true
-container_engine: singularity
 statistics: mean,count,prop
 
 

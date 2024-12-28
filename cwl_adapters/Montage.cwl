@@ -5,22 +5,30 @@ inputs:
     inputBinding:
       prefix: --filePattern
     type: string
+  flipAxis:
+    inputBinding:
+      prefix: --flipAxis
+    type: string?
+  gridSpacing:
+    inputBinding:
+      prefix: --gridSpacing
+    type: string?
+  imageSpacing:
+    inputBinding:
+      prefix: --imageSpacing
+    type: string?
   inpDir:
     inputBinding:
       prefix: --inpDir
     type: Directory
-  mapDirectory:
+  layout:
     inputBinding:
-      prefix: --mapDirectory
-    type: boolean?
+      prefix: --layout
+    type: string?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
-  outFilePattern:
-    inputBinding:
-      prefix: --outFilePattern
-    type: string
 outputs:
   outDir:
     outputBinding:
@@ -28,7 +36,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/file-renaming-tool:0.2.5-dev0
+    dockerPull: polusai/montage-tool:0.5.1
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
@@ -38,4 +46,4 @@ requirements:
     ramMin: 10240
   NetworkAccess:
     networkAccess: true
-baseCommand: ['python3', '-m', 'polus.images.formats.file_renaming']
+baseCommand: ['python3', '-m', 'polus.images.transforms.images.montage']

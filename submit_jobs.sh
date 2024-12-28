@@ -26,7 +26,7 @@ out_temp="$current_dir/temp"
 mkdir -p "$out_temp"
 
 # # Original WIC file
-wic_file="$current_dir/wic_workflows/${dataset}_analysis_workflow.wic"
+wic_file="$current_dir/wic_workflows/${dataset}_viz_workflow.wic"
 echo $wic_file
 
 # Loop through each plate path and update the WIC file
@@ -49,7 +49,7 @@ for plate in "${plates_list[@]}"; do
         inpDir_found = 1
     }
     
-    # Once inpDir is found, update the wic_inline_input on the next occurrence
+    # update the wic_inline_input
     inpDir_found && /wic_inline_input:/ && !updated {
         sub(/wic_inline_input: .*/, "wic_inline_input: " new_value)  # Directly use the plate path
         updated = 1  # Set updated to 1 to avoid updating multiple lines

@@ -10,10 +10,13 @@ GITHUB_TAG = "https://raw.githubusercontent.com"
 
 OUT_PATH = Path.cwd()
 
+SUBMIT_JOBS= OUT_PATH.joinpath("submit_job_plate.sh")
+
+
 
 MANIFEST_URLS = {
             "bbbc_download": f"{GITHUB_TAG}/saketprem/polus-plugins/bbbc_download/utils/bbbc-download-plugin/plugin.json",
-            "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/fix_whitespaces_filerenaming/formats/file-renaming-tool/plugin.json",
+            "file_renaming": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/filepattern_integration_filerenaming/formats/file-renaming-tool/plugin.json",
             "ome_converter": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/fix_worker_omeconverter/formats/ome-converter-tool/plugin.json",
             "estimate_flatfield": f"{GITHUB_TAG}/hamshkhawar/image-tools/refs/heads/update_basicpy_dependency/regression/basic-flatfield-estimation-tool/plugin.json",
             "apply_flatfield": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/apply-flatfield-tool/plugin.json",
@@ -25,12 +28,12 @@ MANIFEST_URLS = {
             "tabular_statistics":f"{GITHUB_TAG}/hamshkhawar/tabular-tools/refs/heads/tabular_statistic/features/tabular-statistics-tool/plugin.json",
             "montage_url" :f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/montage-tool/plugin.json",
             "image_assembler_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/transforms/images/image-assembler-tool/plugin.json",
-            "precompute_slide_url": f"{GITHUB_TAG}/PolusAI/image-tools/refs/heads/master/visualization/precompute-slide-tool/plugin.json"
+            # "precompute_slide_url": f"{GITHUB_TAG}/bengtl/image-tools/refs/heads/precompute-update-docker-python/visualization/precompute-slide-tool/plugin.json"
+            "precompute_slide_url": f"{GITHUB_TAG}/agerardin/image-tools/refs/heads/update/precompute-slide-fp2/visualization/precompute-slide-plugin/plugin.json"
         }
-
-
 # Define keys as frozensets for immutability
-OPTIONAL_KEYS = frozenset(["map_directory", 
+OPTIONAL_KEYS = frozenset(["map_directory",
+                           "inp_dir",
                            "file_extension",
                            "background_correction", 
                             "pixel_per_micron",
@@ -42,7 +45,8 @@ OPTIONAL_KEYS = frozenset(["map_directory",
                             "false_positive_rate",
                             "num_bins",
                             "n",
-                            "statistics"
+                            "statistics",
+                            "container_engine",
                             ])
 
 ANALYSIS_KEYS = frozenset([
@@ -50,19 +54,19 @@ ANALYSIS_KEYS = frozenset([
     "ff_pattern", "df_pattern", "group_by", "map_directory", "features", 
     "file_extension", "background_correction", "container_engine", "pixel_per_micron",
     "neighbor_dist","neg_control","pos_control","thresh_varname","thresh_type","false_positive_rate","num_bins", "n", 
-    "statistics"
+    "statistics","container_engine",
 ])
 
 
 SEG_KEYS = frozenset([
     "name", "inp_dir", "file_pattern", "out_file_pattern",  "seg_pattern", 
     "ff_pattern", "df_pattern", "group_by", "map_directory",
-    "background_correction","container_engine"
+    "background_correction","container_engine",
 ])
 
 
 VIZ_KEYS = frozenset([
-    "name", "inp_dir", "file_pattern", "out_file_pattern", "seg_pattern", 
+    "name", "inp_dir", "file_pattern", "out_file_pattern", 
     "layout", "pyramid_type", "image_type", "ff_pattern", "df_pattern", "group_by", 
     "map_directory", "background_correction", "container_engine"
 ])
@@ -70,8 +74,11 @@ VIZ_KEYS = frozenset([
 # Mapping workflows to their respective keys
 WORKFLOW_KEYS = {
     "analysis": ANALYSIS_KEYS,
+    "anlys": ANALYSIS_KEYS,
     "segmentation": SEG_KEYS,
+    "seg": SEG_KEYS,
     "visualization": VIZ_KEYS,
+    "viz": VIZ_KEYS,
 }
 
 
@@ -123,15 +130,15 @@ class LoadYaml(pydantic.BaseModel):
         #     raise ValueError(f"Invalid parameters for {self.workflow} workflow. Expected keys: {expected_keys}")
 
          # Check for missing required keys
-        required_keys = ANALYSIS_KEYS - OPTIONAL_KEYS
+        if self.workflow in ["analysis", "anlys"]:
+            required_keys = ANALYSIS_KEYS - OPTIONAL_KEYS
+        if self.workflow in ["visualization", "viz"]:
+            required_keys = VIZ_KEYS - OPTIONAL_KEYS
+        if self.workflow in ["segmentation", "seg"]:
+            required_keys = SEG_KEYS - OPTIONAL_KEYS
+            
         missing_keys = required_keys - data.keys()
         if missing_keys:
             raise ValueError(f"Missing required parameters for {self.workflow} workflow. Missing keys: {missing_keys}")
-
-        # Warn for unrecognized keys (optional, remove if not needed)
-        unrecognized_keys = data.keys() - ANALYSIS_KEYS
-        if unrecognized_keys:
-            print(f"Warning: Unrecognized keys found in the YAML file: {unrecognized_keys}")
-
         
 

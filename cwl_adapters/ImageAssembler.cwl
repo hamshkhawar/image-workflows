@@ -1,26 +1,26 @@
 class: CommandLineTool
 cwlVersion: v1.2
 inputs:
-  filePattern:
+  imgPath:
     inputBinding:
-      prefix: --filePattern
-    type: string
-  inpDir:
-    inputBinding:
-      prefix: --inpDir
+      prefix: --imgPath
     type: Directory
-  mapDirectory:
-    inputBinding:
-      prefix: --mapDirectory
-    type: boolean?
   outDir:
     inputBinding:
       prefix: --outDir
     type: Directory
-  outFilePattern:
+  preview:
     inputBinding:
-      prefix: --outFilePattern
-    type: string
+      prefix: --preview
+    type: boolean?
+  stitchPath:
+    inputBinding:
+      prefix: --stitchPath
+    type: Directory
+  timesliceNaming:
+    inputBinding:
+      prefix: --timesliceNaming
+    type: boolean?
 outputs:
   outDir:
     outputBinding:
@@ -28,7 +28,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/file-renaming-tool:0.2.5-dev0
+    dockerPull: polusai/image-assembler-tool:1.4.2
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)
@@ -38,4 +38,4 @@ requirements:
     ramMin: 10240
   NetworkAccess:
     networkAccess: true
-baseCommand: ['python3', '-m', 'polus.images.formats.file_renaming']
+baseCommand: ['python3', '-m', 'polus.images.transforms.images.image_assembler']
