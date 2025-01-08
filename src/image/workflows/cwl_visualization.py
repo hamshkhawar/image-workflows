@@ -122,8 +122,8 @@ class CWLVisualizationWorkflow(CWLWorkflowBase):
         montage.inpDir = apply_flatfield.outDir if self.background_correction else ome_converter.outDir
         montage.filePattern = file_pattern
         montage.layout = self.layout
-        montage.imageSpacing = 1
-        montage.gridSpacing = 20
+        montage.imageSpacing = '1'
+        montage.gridSpacing = '20'
         montage.outDir = Path("montage.outDir")
     
 
@@ -163,7 +163,7 @@ class CWLVisualizationWorkflow(CWLWorkflowBase):
 
         if self.container_engine == "singularity":
             args = ['--container_engine',self.container_engine]
-            # args += ['--cwl_runner', 'toil-cwl-runner']
+            args += ['--cwl_runner', 'toil-cwl-runner']
             workflow = Workflow(steps,  workflowname, args)
         else:
             workflow = Workflow(steps,  workflowname)
@@ -171,18 +171,19 @@ class CWLVisualizationWorkflow(CWLWorkflowBase):
 
         # Compile and run using WIC python API
         workflow.compile()
+        workflow.run()
 
-        if RUN_WORKFLOW == "local":
-            # Run using WIC python API
-            workflow.run()
+        # if RUN_WORKFLOW == "local":
+        #     # Run using WIC python API
+        #     workflow.run()
 
-        if RUN_WORKFLOW == "sbatch":
-            # Save WIC workflow on a disk
-            workflow.write_ast_to_disk(self.wic_path)
+        # if RUN_WORKFLOW == "sbatch":
+        #     # Save WIC workflow on a disk
+        #     workflow.write_ast_to_disk(self.wic_path)
 
-            wic_file = self.wic_path.joinpath(f"{workflowname}.wic")
+        #     wic_file = self.wic_path.joinpath(f"{workflowname}.wic")
             
-            subprocess.run([SUBMIT_JOBS, wic_file, OUT_PATH], check=True)
+        #     subprocess.run([SUBMIT_JOBS, wic_file, OUT_PATH], check=True)
 
         logger.info("Completed CWL visualization workflow.")
         return

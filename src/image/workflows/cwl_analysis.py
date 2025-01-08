@@ -258,17 +258,15 @@ class CWLAnalysisWorkflow(CWLWorkflowBase):
         workflow.compile()
 
         if RUN_WORKFLOW == "local":
-            pass
             # Run using WIC python API
-            # workflow.run()
+            workflow.run()
 
         if RUN_WORKFLOW == "sbatch":
             # Save WIC workflow on a disk
             workflow.write_ast_to_disk(self.wic_path)
-
             wic_file = self.wic_path.joinpath(f"{workflowname}.wic")
             
-            # subprocess.run([SUBMIT_JOBS, wic_file, OUT_PATH], check=True)
+            subprocess.run([SUBMIT_JOBS, wic_file, OUT_PATH], check=True)
 
         logger.info("Completed CWL analysis workflow.")
         return

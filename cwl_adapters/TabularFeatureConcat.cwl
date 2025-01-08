@@ -21,6 +21,10 @@ inputs:
     inputBinding:
       prefix: --inpDir
     type: Directory
+  metaCols:
+    inputBinding:
+      prefix: --metaCols
+    type: string?
   metaDir:
     inputBinding:
       prefix: --metaDir
@@ -44,7 +48,7 @@ outputs:
     type: Directory
 requirements:
   DockerRequirement:
-    dockerPull: polusai/tabular-feature-concat-tool:0.1.0-dev2
+    dockerPull: polusai/tabular-feature-concat-tool:0.1.0-dev4
   InitialWorkDirRequirement:
     listing:
     - entry: $(inputs.outDir)

@@ -179,3 +179,4 @@ node_modules
 #singularity files
 *.sif
 *.txt
+*images

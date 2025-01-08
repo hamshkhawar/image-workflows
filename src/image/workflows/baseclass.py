@@ -108,8 +108,9 @@ class CWLWorkflowBase:
                     with cwl_file.open("r") as file:
                         config = yaml.safe_load(file)
                         config.setdefault("requirements", {})
-                        config["requirements"]["ResourceRequirement"] = {"ramMin": 10240}
+                        config["requirements"]["ResourceRequirement"] = {"ramMin": 10240, "outdirMin": 81920}
                         config["requirements"]["NetworkAccess"] = {"networkAccess": True}
+                
                         
                     # Write the modified config back to the file
                     with cwl_file.open("w") as out_file:
